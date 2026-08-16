@@ -1,0 +1,265 @@
+"use client";
+
+import Image from "next/image";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Star, Sparkles, Gem, ShieldCheck, HeartHandshake, PhoneCall } from "lucide-react";
+
+export default function HomePage() {
+  return (
+    <>
+      {/* HERO SECTION */}
+      <section className="relative min-h-[92vh] flex items-center pt-24 pb-16 overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
+        {/* Decorative Grid & Glow Overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:36px_36px] pointer-events-none" />
+        <div className="absolute -top-24 right-10 w-96 h-96 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="container mx-auto px-4 md:px-6 z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            {/* Left Content Column */}
+            <motion.div 
+              className="lg:col-span-7 space-y-6 text-left"
+              initial={{ opacity: 0, x: -40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs uppercase tracking-[0.2em] font-medium">
+                <Sparkles size={14} className="animate-pulse text-primary" /> Salem's Premier Luxury Bridal Studio
+              </div>
+
+              <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-medium tracking-tight leading-[1.1]">
+                Unveiling Your <br />
+                <span className="italic font-normal text-primary">Radiant Elegance</span> <br />
+                On Your Big Day
+              </h1>
+
+              <p className="text-muted-foreground text-lg md:text-xl max-w-xl leading-relaxed">
+                Transforming every bride into a timeless masterpiece. Specialized in HD & Airbrush Bridal Makeup, Hair Styling, Saree Pre-Pleating, and Antique Jewellery Rental by <strong className="text-foreground">Maha Shree</strong>.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-4 pt-4">
+                <Button asChild size="lg" className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-xs tracking-widest uppercase font-semibold shadow-md hover:shadow-lg transition-all">
+                  <Link href="/booking">Book Consultation</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="rounded-none border-primary/30 text-foreground hover:bg-primary/10 px-8 py-6 text-xs tracking-widest uppercase font-semibold">
+                  <Link href="/gallery">Explore Portfolio</Link>
+                </Button>
+              </div>
+
+              {/* Quick Trust Badges */}
+              <div className="pt-6 border-t border-border/60 flex flex-wrap gap-6 text-xs text-muted-foreground font-medium">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={16} className="text-primary" /> Premium Sweat-Proof Products
+                </div>
+                <div className="flex items-center gap-2">
+                  <Gem size={16} className="text-primary" /> Antique Jewellery Rental
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right Visual Showcase Card Column */}
+            <motion.div 
+              className="lg:col-span-5 relative flex justify-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              {/* Hero Main Feature Card */}
+              <div className="relative w-full max-w-md bg-gradient-to-br from-card via-background to-secondary/20 p-6 rounded-2xl border border-primary/20 shadow-2xl backdrop-blur-sm">
+                
+                {/* Visual Header Image Container */}
+                <div className="relative h-80 w-full rounded-xl overflow-hidden bg-primary/10 border border-primary/10">
+                  <Image
+                    src="/images/portfolio/bridal-close-up-portrait.jpg"
+                    alt="Bridal HD Makeover by Maha Shree"
+                    fill
+                    className="object-cover object-top"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent z-10" />
+                  
+                  {/* Top Floating Badge */}
+                  <div className="absolute top-4 left-4 z-20 bg-background/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-primary/20 shadow-sm flex items-center gap-1.5 text-xs font-semibold">
+                    <Star size={14} className="text-amber-500 fill-amber-500" />
+                    <span>4.9 / 5.0 Rating</span>
+                  </div>
+
+                  <div className="absolute bottom-3 left-4 right-4 z-20">
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold block">Real Client Look</span>
+                    <span className="text-sm font-heading font-medium text-foreground">HD Bridal Makeover by Maha Shree</span>
+                  </div>
+                </div>
+
+
+                {/* Bottom Floating Badge */}
+                <motion.div 
+                  className="absolute -bottom-6 -left-6 bg-card border border-primary/30 p-4 rounded-xl shadow-lg flex items-center gap-4 z-30"
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                >
+                  <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold">
+                    3+
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Years Experience</h4>
+                    <p className="text-xs text-muted-foreground">500+ Brides Transformed</p>
+                  </div>
+                </motion.div>
+
+                {/* Floating WhatsApp Action Pill */}
+                <a 
+                  href="https://wa.me/918973587806" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="absolute -top-4 -right-4 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-full text-xs font-semibold shadow-md flex items-center gap-2 transition-transform hover:scale-105 z-30"
+                >
+                  <PhoneCall size={14} /> Quick WhatsApp
+                </a>
+
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* STATS BANNERS */}
+      <section className="py-12 bg-primary/10 border-y border-primary/15">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {[
+              { count: "500+", label: "Happy Brides" },
+              { count: "3+ Years", label: "Professional Expertise" },
+              { count: "100%", label: "Customized Bridal Looks" },
+              { count: "Salem & Beyond", label: "On-Location Service" },
+            ].map((stat, idx) => (
+              <motion.div 
+                key={idx}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+              >
+                <div className="font-heading text-3xl md:text-4xl text-primary font-bold mb-1">{stat.count}</div>
+                <div className="text-xs uppercase tracking-widest text-muted-foreground font-medium">{stat.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* INTRODUCTION SECTION */}
+      <section className="py-24 bg-background border-t border-border/40">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            {/* Artist Headshot Card */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="lg:col-span-5 relative flex justify-center"
+            >
+              <div className="relative w-full max-w-sm rounded-2xl overflow-hidden border border-primary/30 p-2 bg-gradient-to-b from-primary/10 via-background to-secondary/30 shadow-2xl">
+                <div className="relative h-[420px] w-full rounded-xl overflow-hidden border border-primary/20 bg-muted">
+                  <Image
+                    src="/images/maha-shree-profile.jpg"
+                    alt="Maha Shree - Lead Bridal Makeup Artist"
+                    fill
+                    className="object-cover object-top"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent z-10" />
+                  <div className="absolute bottom-4 left-4 right-4 z-20 text-center">
+                    <span className="text-[10px] uppercase tracking-[0.25em] text-primary font-bold block">Lead Artist & Founder</span>
+                    <h3 className="font-heading text-xl font-bold text-foreground">Maha Shree</h3>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Artist Intro Text */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="lg:col-span-7 space-y-6 text-left"
+            >
+              <span className="text-primary font-medium tracking-[0.2em] uppercase text-xs block">About The Artist</span>
+              <h2 className="font-heading text-4xl md:text-5xl font-medium tracking-tight">
+                A Touch of Pure Luxury by Maha Shree
+              </h2>
+              <div className="w-16 h-1 bg-primary" />
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                Hi, I'm <strong className="text-foreground">Maha Shree</strong>, founder and principal artist of SKM Luxury Bridal Studio in Salem. I specialize in crafting bespoke bridal makeovers that highlight your natural beauty, outfit textures, and personal wedding aesthetic.
+              </p>
+              <p className="text-base text-muted-foreground leading-relaxed">
+                From long-lasting HD & Airbrush makeup to intricate hair styling, antique temple jewellery rental, and Saree box pleating, we handle every detail so you shine with absolute elegance and confidence.
+              </p>
+
+              <div className="pt-2">
+                <Link href="/about" className="inline-flex items-center gap-2 text-primary font-semibold hover:text-primary/80 transition-colors uppercase tracking-widest text-xs border-b border-primary/40 pb-1">
+                  Read Maha Shree's Full Story & Certifications <ArrowRight size={16} />
+                </Link>
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </section>
+
+
+      {/* SERVICES PREVIEW */}
+      <section className="py-24 bg-secondary/10 relative">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 space-y-3">
+            <span className="text-primary font-medium tracking-[0.2em] uppercase text-xs block">Our Expertise</span>
+            <h2 className="font-heading text-4xl md:text-5xl">Bespoke Bridal Services</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base">
+              End-to-end beauty and styling packages tailored to your traditions and venue.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {[
+              { title: "Bridal Makeup", desc: "Sweat-proof, long-lasting HD & Airbrush techniques designed for high-definition photography.", icon: Sparkles },
+              { title: "Saree Draping & Pre-Pleating", desc: "Expert box folding and pre-pleating to ensure seamless drape stability throughout the event.", icon: HeartHandshake },
+              { title: "Jewellery Rental", desc: "Exquisite temple, matte gold, and antique bridal sets available for rental.", icon: Gem },
+            ].map((service, i) => {
+              const IconComp = service.icon;
+              return (
+                <motion.div
+                  key={service.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  className="bg-card p-8 rounded-xl border border-border/80 text-center hover:border-primary/50 hover:shadow-lg transition-all group"
+                >
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                    <IconComp className="text-primary" size={28} />
+                  </div>
+                  <h3 className="font-heading text-2xl mb-4">{service.title}</h3>
+                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">{service.desc}</p>
+                  <Link href="/services" className="text-primary text-xs tracking-wider uppercase font-semibold inline-flex items-center gap-1 hover:gap-2 transition-all">
+                    Discover Details <ArrowRight size={14} />
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+          
+          <div className="text-center mt-14">
+            <Button asChild variant="outline" className="rounded-none border-primary/30 text-foreground hover:bg-primary/10 px-8 py-6 text-xs tracking-widest uppercase">
+              <Link href="/services">View All Packages & Services</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
