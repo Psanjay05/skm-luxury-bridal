@@ -91,11 +91,13 @@ const jsonLd = {
   description:
     "Premier luxury bridal studio in Salem specializing in HD & Airbrush Bridal Makeup, Hair Styling, Saree Pre-Pleating, and Antique Jewellery Rental by Maha Shree.",
   url: siteUrl,
-  telephone: "+91 8973587806",
+  telephone: ["+91 8608194233", "+91 8973587806"],
   address: {
     "@type": "PostalAddress",
+    streetAddress: "4/39 Alagusamuthiram, Near Steel Plant",
     addressLocality: "Salem",
     addressRegion: "Tamil Nadu",
+    postalCode: "636030",
     addressCountry: "IN",
   },
   geo: {
@@ -111,6 +113,7 @@ const jsonLd = {
   },
   sameAs: [
     "https://www.instagram.com/maha_unique_brides_23",
+    "https://wa.me/918608194233",
     "https://wa.me/918973587806",
   ],
 };

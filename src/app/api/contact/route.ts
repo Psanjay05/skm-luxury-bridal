@@ -1,17 +1,34 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import ContactMessage from "@/models/ContactMessage";
 import { handleApiError } from "@/lib/errors";
-import { z } from "zod";
+import { contactSchema } from "@/lib/validations/contact";
 
-const contactSchema = z.object({
-  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
-  phone: z.string().trim().min(10, "Phone number must be at least 10 digits").max(20),
-  email: z.string().trim().email("Invalid email format").optional().or(z.literal("")),
-  message: z.string().trim().min(5, "Message must be at least 5 characters").max(2000),
-  website_hp: z.string().optional(), // Honeypot field for bot spam protection
-});
+// GET list contact messages (Admin only)
+export async function GET(req: Request) {
+  try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
 
+    await connectToDatabase();
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get("status");
+
+    const filter: Record<string, unknown> = { isDeleted: false };
+    if (status && status !== "all") filter.status = status;
+
+    const messages = await ContactMessage.find(filter).sort({ createdAt: -1 }).lean();
+
+    return NextResponse.json({ success: true, data: messages });
+  } catch (err) {
+    return handleApiError(err, "Failed to fetch contact messages.");
+  }
+}
+
+// POST create contact message (Public)
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -19,21 +36,21 @@ export async function POST(req: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
     if (parsed.data.website_hp && parsed.data.website_hp.length > 0) {
-      return NextResponse.json({ success: true }, { status: 200 });
+      return NextResponse.json({ success: true, data: null }, { status: 200 });
     }
 
     await connectToDatabase();
 
     const { website_hp, ...messageData } = parsed.data;
-    await ContactMessage.create(messageData);
+    const message = await ContactMessage.create(messageData);
 
-    return NextResponse.json({ success: true }, { status: 201 });
+    return NextResponse.json({ success: true, data: { id: message._id } }, { status: 201 });
   } catch (err) {
     return handleApiError(err, "Failed to submit contact message. Please try again.");
   }

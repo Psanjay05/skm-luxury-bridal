@@ -17,11 +17,24 @@ import {
   HelpCircle,
   ArrowRight,
   ShieldCheck,
+  Activity,
+  UserCheck,
+  Mail,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-async function getStats() {
+interface ActivityItem {
+  id: string;
+  type: "booking" | "message";
+  title: string;
+  subtitle: string;
+  date: Date;
+  status: string;
+  link: string;
+}
+
+async function getDashboardData() {
   try {
     await connectToDatabase();
     const [
@@ -33,6 +46,8 @@ async function getStats() {
       totalServices,
       totalTestimonials,
       totalFaqs,
+      recentBookings,
+      recentMessages,
     ] = await Promise.all([
       Booking.countDocuments({ isDeleted: false }),
       Booking.countDocuments({ status: "pending", isDeleted: false }),
@@ -42,28 +57,61 @@ async function getStats() {
       Service.countDocuments({ isDeleted: false }),
       Testimonial.countDocuments({ isDeleted: false }),
       FAQ.countDocuments({ isDeleted: false }),
+      Booking.find({ isDeleted: false }).sort({ createdAt: -1 }).limit(5).lean(),
+      ContactMessage.find({ isDeleted: false }).sort({ createdAt: -1 }).limit(5).lean(),
     ]);
+
+    const formattedBookings: ActivityItem[] = recentBookings.map((b: any) => ({
+      id: b._id.toString(),
+      type: "booking",
+      title: `Booking Request: ${b.customerName}`,
+      subtitle: `${b.service} - ${b.phone}`,
+      date: new Date(b.createdAt),
+      status: b.status,
+      link: "/admin/bookings",
+    }));
+
+    const formattedMessages: ActivityItem[] = recentMessages.map((m: any) => ({
+      id: m._id.toString(),
+      type: "message",
+      title: `Contact Inquiry: ${m.name}`,
+      subtitle: m.message,
+      date: new Date(m.createdAt),
+      status: m.status,
+      link: "/admin/messages",
+    }));
+
+    const recentActivity = [...formattedBookings, ...formattedMessages]
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 5);
+
     return {
-      totalBookings,
-      pendingBookings,
-      unreadMessages,
-      totalMessages,
-      galleryImages,
-      totalServices,
-      totalTestimonials,
-      totalFaqs,
+      stats: {
+        totalBookings,
+        pendingBookings,
+        unreadMessages,
+        totalMessages,
+        galleryImages,
+        totalServices,
+        totalTestimonials,
+        totalFaqs,
+      },
+      recentActivity,
     };
   } catch (err) {
     console.error("[DASHBOARD_STATS_ERROR]", err);
     return {
-      totalBookings: 0,
-      pendingBookings: 0,
-      unreadMessages: 0,
-      totalMessages: 0,
-      galleryImages: 0,
-      totalServices: 0,
-      totalTestimonials: 0,
-      totalFaqs: 0,
+      stats: {
+        totalBookings: 0,
+        pendingBookings: 0,
+        unreadMessages: 0,
+        totalMessages: 0,
+        galleryImages: 0,
+        totalServices: 0,
+        totalTestimonials: 0,
+        totalFaqs: 0,
+      },
+      recentActivity: [],
     };
   }
 }
@@ -72,7 +120,7 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session) redirect("/admin/login");
 
-  const stats = await getStats();
+  const { stats, recentActivity } = await getDashboardData();
 
   const modules = [
     {
@@ -185,6 +233,63 @@ export default async function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Recent Activity Feed */}
+      <Card className="border-border shadow-sm">
+        <CardHeader className="border-b border-border/60 pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                <Activity size={18} />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-heading font-bold text-foreground">Recent Activity Feed</CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">Latest 5 client bookings & inquiry messages</CardDescription>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0 divide-y divide-border/60">
+          {recentActivity.length === 0 ? (
+            <div className="p-8 text-center text-sm text-muted-foreground">
+              No recent activity recorded yet. New bookings and contact form messages will appear here.
+            </div>
+          ) : (
+            recentActivity.map((item) => (
+              <div key={`${item.type}-${item.id}`} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-full mt-0.5 ${item.type === "booking" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/60" : "bg-blue-100 text-blue-700 dark:bg-blue-950/60"}`}>
+                    {item.type === "booking" ? <UserCheck size={16} /> : <Mail size={16} />}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground">{item.title}</h4>
+                    <p className="text-xs text-muted-foreground line-clamp-1 max-w-md">{item.subtitle}</p>
+                    <span className="text-[11px] text-muted-foreground/80 mt-1 block">
+                      {item.date.toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                    item.status === "pending" || item.status === "unread"
+                      ? "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+                      : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                  }`}>
+                    {item.status}
+                  </span>
+                  <Button asChild variant="ghost" size="sm" className="text-xs gap-1">
+                    <Link href={item.link}>
+                      View <ArrowRight size={12} />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

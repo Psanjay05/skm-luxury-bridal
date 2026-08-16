@@ -8,7 +8,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { MessageSquare, PhoneCall, Trash2, CheckCircle2, Clock } from "lucide-react";
+import { MessageSquare, Trash2, CheckCircle2, Clock } from "lucide-react";
 
 type Booking = {
   _id: string;
@@ -26,10 +26,10 @@ type Booking = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800 border border-amber-200",
-  confirmed: "bg-emerald-100 text-emerald-800 border border-emerald-200",
-  completed: "bg-blue-100 text-blue-800 border border-blue-200",
-  cancelled: "bg-rose-100 text-rose-800 border border-rose-200",
+  pending: "bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300",
+  confirmed: "bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300",
+  completed: "bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300",
+  cancelled: "bg-rose-100 text-rose-800 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300",
 };
 
 export default function BookingsPage() {
@@ -42,11 +42,12 @@ export default function BookingsPage() {
     setLoading(true);
     setActionError(null);
     try {
-      const res = await fetch(`/api/admin/bookings?status=${statusFilter}`);
+      const res = await fetch(`/api/bookings?status=${statusFilter}`);
       if (!res.ok) throw new Error("Failed to load bookings");
-      const data = await res.json();
-      setBookings(data.bookings ?? []);
+      const json = await res.json();
+      setBookings(json.data?.bookings ?? json.bookings ?? []);
     } catch (err) {
+      console.error("[FETCH_BOOKINGS_ERROR]", err);
       setActionError("Unable to fetch bookings. Please refresh the page.");
     } finally {
       setLoading(false);
@@ -60,14 +61,15 @@ export default function BookingsPage() {
   const updateStatus = async (id: string, status: string) => {
     try {
       setActionError(null);
-      const res = await fetch("/api/admin/bookings", {
+      const res = await fetch(`/api/bookings/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error("Failed to update status");
       fetchBookings();
     } catch (err) {
+      console.error("[UPDATE_BOOKING_STATUS_ERROR]", err);
       setActionError("Failed to update booking status.");
     }
   };
@@ -76,14 +78,13 @@ export default function BookingsPage() {
     if (!confirm("Are you sure you want to delete this booking record?")) return;
     try {
       setActionError(null);
-      const res = await fetch("/api/admin/bookings", {
+      const res = await fetch(`/api/bookings/${id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
       });
       if (!res.ok) throw new Error("Failed to delete booking");
       fetchBookings();
     } catch (err) {
+      console.error("[DELETE_BOOKING_ERROR]", err);
       setActionError("Failed to delete booking.");
     }
   };
@@ -102,7 +103,7 @@ export default function BookingsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-3xl text-foreground">Bookings Management</h1>
+          <h1 className="font-heading text-3xl font-bold text-foreground">Bookings Management</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Review and process client bridal appointments
           </p>
@@ -181,7 +182,6 @@ export default function BookingsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end items-center gap-2">
-                      {/* Direct WhatsApp Client Action */}
                       <a
                         href={getWhatsAppLink(b)}
                         target="_blank"

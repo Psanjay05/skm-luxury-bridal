@@ -1,0 +1,103 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import connectToDatabase from "@/lib/db";
+import Booking from "@/models/Booking";
+import { handleApiError } from "@/lib/errors";
+import { bookingSchema } from "@/lib/validations/booking";
+
+function generateBookingReference(): string {
+  const year = new Date().getFullYear();
+  const randomDigits = Math.floor(10000 + Math.random() * 90000);
+  return `SKM-${year}-${randomDigits}`;
+}
+
+// GET all bookings (Admin only)
+export async function GET(req: Request) {
+  try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    await connectToDatabase();
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get("status");
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
+
+    const filter: Record<string, unknown> = { isDeleted: false };
+    if (status && status !== "all") filter.status = status;
+
+    const [bookings, total] = await Promise.all([
+      Booking.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      Booking.countDocuments(filter),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      data: { bookings, total, page, pages: Math.ceil(total / limit) },
+    });
+  } catch (err) {
+    return handleApiError(err, "Failed to fetch bookings.");
+  }
+}
+
+// POST create booking (Public)
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const parsed = bookingSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    // Honeypot spam check
+    if (parsed.data.website_hp && parsed.data.website_hp.length > 0) {
+      return NextResponse.json(
+        { success: true, data: { bookingReference: "SKM-2026-00000" } },
+        { status: 200 }
+      );
+    }
+
+    await connectToDatabase();
+
+    let bookingReference = generateBookingReference();
+    let isUnique = false;
+    let attempts = 0;
+
+    while (!isUnique && attempts < 5) {
+      const existing = await Booking.findOne({ bookingReference });
+      if (!existing) {
+        isUnique = true;
+      } else {
+        bookingReference = generateBookingReference();
+        attempts++;
+      }
+    }
+
+    const { website_hp, ...bookingData } = parsed.data;
+
+    const booking = await Booking.create({
+      ...bookingData,
+      bookingReference,
+      preferredDate: new Date(bookingData.preferredDate),
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          id: booking._id,
+          bookingReference: booking.bookingReference,
+        },
+      },
+      { status: 201 }
+    );
+  } catch (err) {
+    return handleApiError(err, "Failed to submit booking request. Please try again.");
+  }
+}
