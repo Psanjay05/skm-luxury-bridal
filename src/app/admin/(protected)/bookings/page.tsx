@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { MessageSquare, Trash2, CheckCircle2, Clock } from "lucide-react";
+import { MessageSquare, Trash2, CheckCircle2, Clock, Search } from "lucide-react";
 
 type Booking = {
   _id: string;
@@ -36,6 +37,7 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchBookings = async () => {
@@ -57,6 +59,24 @@ export default function BookingsPage() {
   useEffect(() => {
     fetchBookings();
   }, [statusFilter]);
+
+  const filteredBookings = bookings.filter((b) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const ref = (b.bookingReference || "").toLowerCase();
+    const name = (b.customerName || "").toLowerCase();
+    const phone = (b.phone || "").toLowerCase();
+    const service = (b.service || "").toLowerCase();
+    const location = (b.location || "").toLowerCase();
+
+    return (
+      ref.includes(q) ||
+      name.includes(q) ||
+      phone.includes(q) ||
+      service.includes(q) ||
+      location.includes(q)
+    );
+  });
 
   const updateStatus = async (id: string, status: string) => {
     try {
@@ -108,18 +128,31 @@ export default function BookingsPage() {
             Review and process client bridal appointments
           </p>
         </div>
-        <Select value={statusFilter} onValueChange={(v) => { if (v) setStatusFilter(v); }}>
-          <SelectTrigger className="w-48 bg-background">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
+
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+            <Input
+              placeholder="Search name, phone, ref..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-background text-sm"
+            />
+          </div>
+
+          <Select value={statusFilter} onValueChange={(v) => { if (v) setStatusFilter(v); }}>
+            <SelectTrigger className="w-full sm:w-44 bg-background">
+              <SelectValue placeholder="Filter status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {actionError && (
@@ -150,14 +183,14 @@ export default function BookingsPage() {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : bookings.length === 0 ? (
+            ) : filteredBookings.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
-                  No bookings found for the selected filter.
+                  No bookings found matching your filter or search query.
                 </TableCell>
               </TableRow>
             ) : (
-              bookings.map((b) => (
+              filteredBookings.map((b) => (
                 <TableRow key={b._id} className="hover:bg-muted/20 transition-colors">
                   <TableCell className="font-mono text-xs font-semibold text-primary">
                     {b.bookingReference ?? `SKM-${b._id.slice(-6).toUpperCase()}`}

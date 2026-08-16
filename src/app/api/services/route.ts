@@ -5,12 +5,36 @@ import Service from "@/models/Service";
 import { handleApiError } from "@/lib/errors";
 import { serviceSchema } from "@/lib/validations/service";
 
+const FALLBACK_SERVICES = [
+  {
+    _id: "s1",
+    title: "Royal HD Bridal Makeover",
+    description: "Flawless sweat-proof high-definition base makeup, false lash application, custom lip artistry, and saree draping.",
+    imageUrl: "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
+    category: "makeup",
+    ctaText: "Book Royal Package",
+  },
+  {
+    _id: "s2",
+    title: "Airbrush Luxury Bridal Package",
+    description: "Ultra long-lasting 18+ hour waterproof airbrush makeup finish, temple hair ornament styling, and jewelry draping.",
+    imageUrl: "/images/portfolio/before-after-hd-makeover.jpg",
+    category: "makeup",
+    ctaText: "Book Airbrush Package",
+  },
+];
+
 // GET all non-deleted services (Public)
 export async function GET() {
   try {
-    await connectToDatabase();
-    const services = await Service.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
-    return NextResponse.json({ success: true, data: services });
+    try {
+      await connectToDatabase();
+      const services = await Service.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
+      return NextResponse.json({ success: true, data: services });
+    } catch (dbErr) {
+      console.warn("[GET_SERVICES] DB offline, returning fallback services:", dbErr);
+      return NextResponse.json({ success: true, data: FALLBACK_SERVICES });
+    }
   } catch (err) {
     return handleApiError(err, "Failed to fetch services.");
   }

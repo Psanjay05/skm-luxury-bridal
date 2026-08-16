@@ -4,7 +4,29 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Star, Sparkles, Gem, ShieldCheck, HeartHandshake, PhoneCall } from "lucide-react";
+import { ArrowRight, Star, Sparkles, Gem, ShieldCheck, HeartHandshake, PhoneCall, Award, ExternalLink } from "lucide-react";
+
+// Inline Instagram Icon
+function InstagramIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
 
 export default function HomePage() {
   return (
@@ -26,7 +48,7 @@ export default function HomePage() {
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs uppercase tracking-[0.2em] font-medium">
-                <Sparkles size={14} className="animate-pulse text-primary" /> Salem's Premier Luxury Bridal Studio
+                <Sparkles size={14} className="animate-pulse text-primary" /> Salem's Premier Certified MUA Studio
               </div>
 
               <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-medium tracking-tight leading-[1.1]">
@@ -36,7 +58,7 @@ export default function HomePage() {
               </h1>
 
               <p className="text-muted-foreground text-lg md:text-xl max-w-xl leading-relaxed">
-                Transforming every bride into a timeless masterpiece. Specialized in HD & Airbrush Bridal Makeup, Hair Styling, Saree Pre-Pleating, and Antique Jewellery Rental by <strong className="text-foreground">Maha Shree</strong>.
+                Transforming every bride into a timeless masterpiece. Certified MUA packages by <strong className="text-foreground">Maha Shree</strong> starting from ₹999 for guest glam & ₹9,999 for bridal makeovers.
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-4">
@@ -51,7 +73,10 @@ export default function HomePage() {
               {/* Quick Trust Badges */}
               <div className="pt-6 border-t border-border/60 flex flex-wrap gap-6 text-xs text-muted-foreground font-medium">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-primary" /> Premium Sweat-Proof Products
+                  <Award size={16} className="text-primary" /> Certified Professional MUA
+                </div>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={16} className="text-primary" /> Sweat-Proof HD Base
                 </div>
                 <div className="flex items-center gap-2">
                   <Gem size={16} className="text-primary" /> Antique Jewellery Rental
@@ -87,11 +112,10 @@ export default function HomePage() {
                   </div>
 
                   <div className="absolute bottom-3 left-4 right-4 z-20">
-                    <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold block">Real Client Look</span>
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold block">Certified MUA Work</span>
                     <span className="text-sm font-heading font-medium text-foreground">HD Bridal Makeover by Maha Shree</span>
                   </div>
                 </div>
-
 
                 {/* Bottom Floating Badge */}
                 <motion.div 
@@ -110,7 +134,7 @@ export default function HomePage() {
 
                 {/* Floating WhatsApp Action Pill */}
                 <a 
-                  href="https://wa.me/918973587806" 
+                  href="https://wa.me/918608194233" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="absolute -top-4 -right-4 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-full text-xs font-semibold shadow-md flex items-center gap-2 transition-transform hover:scale-105 z-30"
@@ -131,9 +155,9 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { count: "500+", label: "Happy Brides" },
-              { count: "3+ Years", label: "Professional Expertise" },
-              { count: "100%", label: "Customized Bridal Looks" },
-              { count: "Salem & Beyond", label: "On-Location Service" },
+              { count: "3+ Years", label: "Certified Professional MUA" },
+              { count: "Starts ₹999", label: "Affordable Makeover Packages" },
+              { count: "Salem & Travel", label: "Available Across South India" },
             ].map((stat, idx) => (
               <motion.div 
                 key={idx}
@@ -146,6 +170,42 @@ export default function HomePage() {
                 <div className="text-xs uppercase tracking-widest text-muted-foreground font-medium">{stat.label}</div>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* OFFICIAL INSTAGRAM SECTION (@maha_unique_brides_23) */}
+      <section className="py-20 bg-background border-t border-border/40">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="bg-card border border-primary/20 rounded-2xl p-8 sm:p-12 shadow-xl relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="space-y-4 max-w-xl text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white text-xs font-bold uppercase tracking-wider">
+                <InstagramIcon size={14} /> Official Instagram Page
+              </div>
+              <h2 className="font-heading text-3xl sm:text-4xl font-bold text-foreground">
+                Follow @maha_unique_brides_23
+              </h2>
+              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+                Watch live makeover transformation reels, customer video testimonials, saree box pleating tutorials, and daily bridal updates directly on Instagram.
+              </p>
+              <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-foreground pt-2">
+                <span className="px-3 py-1.5 rounded-md bg-secondary/50 border border-border">👸 Real Bride Looks</span>
+                <span className="px-3 py-1.5 rounded-md bg-secondary/50 border border-border">🏆 Certified MUA Highlights</span>
+                <span className="px-3 py-1.5 rounded-md bg-secondary/50 border border-border">❤️ Mehendi & Pleating</span>
+              </div>
+            </div>
+
+            <div className="shrink-0 text-center lg:text-right space-y-4">
+              <a
+                href="https://www.instagram.com/maha_unique_brides_23"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-heading font-bold text-sm tracking-wider uppercase shadow-lg hover:shadow-2xl transition-all hover:scale-105"
+              >
+                <InstagramIcon size={20} /> Visit Instagram Profile <ExternalLink size={16} />
+              </a>
+              <p className="text-xs text-muted-foreground">Founder & MUA: <strong className="text-foreground">@mahsri_sanjeev_23</strong></p>
+            </div>
           </div>
         </div>
       </section>
@@ -173,7 +233,7 @@ export default function HomePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent z-10" />
                   <div className="absolute bottom-4 left-4 right-4 z-20 text-center">
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-primary font-bold block">Lead Artist & Founder</span>
+                    <span className="text-[10px] uppercase tracking-[0.25em] text-primary font-bold block">Lead Certified MUA & Founder</span>
                     <h3 className="font-heading text-xl font-bold text-foreground">Maha Shree</h3>
                   </div>
                 </div>
@@ -194,10 +254,10 @@ export default function HomePage() {
               </h2>
               <div className="w-16 h-1 bg-primary" />
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Hi, I'm <strong className="text-foreground">Maha Shree</strong>, founder and principal artist of SKM Luxury Bridal Studio in Salem. I specialize in crafting bespoke bridal makeovers that highlight your natural beauty, outfit textures, and personal wedding aesthetic.
+                Hi, I'm <strong className="text-foreground">Maha Shree</strong>, certified professional MUA and founder of SKM Luxury Bridal Studio in Salem. I specialize in crafting bespoke bridal makeovers that highlight your natural beauty, outfit textures, and personal wedding aesthetic.
               </p>
               <p className="text-base text-muted-foreground leading-relaxed">
-                From long-lasting HD & Airbrush makeup to intricate hair styling, antique temple jewellery rental, and Saree box pleating, we handle every detail so you shine with absolute elegance and confidence.
+                From long-lasting HD & Airbrush makeup to intricate hair styling, antique temple jewellery rental, Mehendi artistry, and Saree box pleating, we handle every detail so you shine with absolute elegance and confidence.
               </p>
 
               <div className="pt-2">
@@ -210,7 +270,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
 
       {/* SERVICES PREVIEW */}
       <section className="py-24 bg-secondary/10 relative">
@@ -225,8 +284,8 @@ export default function HomePage() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {[
-              { title: "Bridal Makeup", desc: "Sweat-proof, long-lasting HD & Airbrush techniques designed for high-definition photography.", icon: Sparkles },
-              { title: "Saree Draping & Pre-Pleating", desc: "Expert box folding and pre-pleating to ensure seamless drape stability throughout the event.", icon: HeartHandshake },
+              { title: "Bridal & Guest Makeup", desc: "Sweat-proof, long-lasting HD & Airbrush techniques starting from ₹999 for guest glam.", icon: Sparkles },
+              { title: "Saree Draping & Box Pleating", desc: "Expert box folding and pre-pleating to ensure seamless drape stability throughout the event.", icon: HeartHandshake },
               { title: "Jewellery Rental", desc: "Exquisite temple, matte gold, and antique bridal sets available for rental.", icon: Gem },
             ].map((service, i) => {
               const IconComp = service.icon;
@@ -262,4 +321,3 @@ export default function HomePage() {
     </>
   );
 }
-
