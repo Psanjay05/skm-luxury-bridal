@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Sparkles, Check, ArrowRight, Calculator, Star, PhoneCall } from "lucide-react";
+import { Sparkles, Check, ArrowRight, Calculator, Star, PhoneCall, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { trackEvent } from "@/lib/gtag";
+import { PrintQuotationModal } from "@/components/bridal-calculator/PrintQuotationModal";
 
 interface PackageTier {
   name: string;
@@ -66,6 +67,7 @@ export default function BridalPackagesPage() {
   // Package customizer interactive state
   const [selectedFunctions, setSelectedFunctions] = useState<string[]>(["Muhurtham"]);
   const [selectedAddons, setSelectedAddons] = useState<string[]>(["Saree Box Pleating"]);
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   const functionsList = [
     { name: "Muhurtham", cost: 12000 },
@@ -299,6 +301,18 @@ export default function BridalPackagesPage() {
                 </Link>
               </Button>
               <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto border-primary/40 py-6 gap-2 font-semibold hover:bg-primary/10"
+                onClick={() => {
+                  trackEvent("package_builder_quote", { type: "print_pdf_estimate", value: calculateTotal() });
+                  setShowPrintModal(true);
+                }}
+              >
+                <FileText size={16} className="text-primary" /> Download / Print PDF
+              </Button>
+              <Button
                 asChild
                 size="lg"
                 variant="outline"
@@ -321,6 +335,15 @@ export default function BridalPackagesPage() {
             </div>
           </div>
         </div>
+
+        {/* Printable PDF Quotation Modal */}
+        <PrintQuotationModal
+          isOpen={showPrintModal}
+          onClose={() => setShowPrintModal(false)}
+          selectedFunctions={functionsList.filter((f) => selectedFunctions.includes(f.name))}
+          selectedAddons={addonsList.filter((a) => selectedAddons.includes(a.name))}
+          totalCost={calculateTotal()}
+        />
       </div>
     </div>
   );
