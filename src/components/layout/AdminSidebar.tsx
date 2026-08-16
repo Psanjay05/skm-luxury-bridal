@@ -29,6 +29,7 @@ const NAV = [
   { href: "/admin/testimonials", label: "Testimonials", icon: Star },
   { href: "/admin/messages",  label: "Messages",  icon: Phone },
   { href: "/admin/faq",       label: "FAQ",       icon: HelpCircle },
+  { href: "/admin/settings",  label: "Settings",  icon: Settings },
 ];
 
 export function AdminSidebar() {
