@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Sparkles, Check, ArrowRight, Calculator, Star, PhoneCall } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { trackEvent } from "@/lib/gtag";
 
 interface PackageTier {
   name: string;
@@ -283,12 +284,30 @@ export default function BridalPackagesPage() {
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-3 w-full lg:w-auto">
-              <Button asChild size="lg" className="w-full sm:w-auto bg-primary text-primary-foreground font-semibold tracking-wide py-6 shadow-md">
+              <Button
+                asChild
+                size="lg"
+                className="w-full sm:w-auto bg-primary text-primary-foreground font-semibold tracking-wide py-6 shadow-md"
+                onClick={() => trackEvent("package_builder_quote", {
+                  type: "online_reserve",
+                  value: calculateTotal(),
+                  functions: selectedFunctions.join(", "),
+                })}
+              >
                 <Link href={`/booking?service=Custom%20Package%20(Est%20₹${calculateTotal()})`}>
                   Reserve Online <ArrowRight size={16} className="ml-1" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto border-primary/30 py-6 gap-2 font-semibold">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto border-primary/30 py-6 gap-2 font-semibold"
+                onClick={() => trackEvent("whatsapp_click", {
+                  source: "package_builder",
+                  value: calculateTotal(),
+                })}
+              >
                 <a
                   href={`https://wa.me/918608194233?text=${encodeURIComponent(
                     `Hello Maha Shree, I calculated a custom bridal package on your website for ₹${calculateTotal().toLocaleString("en-IN")}:\n• Functions: ${selectedFunctions.join(", ") || "None"}\n• Add-ons: ${selectedAddons.join(", ") || "None"}\nPlease let me know your availability!`

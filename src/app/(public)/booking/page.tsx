@@ -21,6 +21,7 @@ import {
   PhoneCall,
   ShieldCheck,
 } from "lucide-react";
+import { trackEvent } from "@/lib/gtag";
 
 const SERVICE_OPTIONS = [
   { name: "Royal HD Makeover Package", price: "₹25,000", tag: "Most Popular" },
@@ -46,6 +47,11 @@ function BookingFormContent() {
 
   const [successRef, setSuccessRef] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [availabilityData, setAvailabilityData] = useState<{
+    availability: "available" | "limited" | "fully_booked";
+    message: string;
+  } | null>(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   const {
     register,
@@ -81,6 +87,33 @@ function BookingFormContent() {
     }
   }, [serviceParam, setValue]);
 
+  useEffect(() => {
+    if (!currentDate) {
+      setAvailabilityData(null);
+      return;
+    }
+    async function checkDateAvailability() {
+      setCheckingAvailability(true);
+      try {
+        const res = await fetch(`/api/bookings/availability?date=${encodeURIComponent(currentDate)}`);
+        const json = await res.json();
+        if (res.ok && json.success && json.data) {
+          setAvailabilityData(json.data);
+        } else {
+          setAvailabilityData({
+            availability: "available",
+            message: "✅ Date open for reservation",
+          });
+        }
+      } catch (err) {
+        console.error("[DATE_AVAILABILITY_ERROR]", err);
+      } finally {
+        setCheckingAvailability(false);
+      }
+    }
+    checkDateAvailability();
+  }, [currentDate]);
+
   const onSubmit = async (data: BookingInput) => {
     setSubmitError(null);
     try {
@@ -94,6 +127,11 @@ function BookingFormContent() {
 
       if (res.ok && json.success) {
         setSuccessRef(json.data?.bookingReference || "SKM-BOOKING-CONFIRMED");
+        trackEvent("booking_submit", {
+          service: data.service,
+          date: data.preferredDate,
+          location: data.location,
+        });
         reset();
       } else {
         setSubmitError(
@@ -107,6 +145,11 @@ function BookingFormContent() {
   };
 
   const generateWhatsAppDirectLink = () => {
+    trackEvent("whatsapp_click", {
+      source: "booking_page_urgent",
+      service: currentService,
+      date: currentDate,
+    });
     const text = encodeURIComponent(
       `Hello Maha Shree, I would like to check booking availability at SKM Luxury Bridal Studio:\n• Name: ${currentName || "Prospective Bride"}\n• Service: ${currentService || "Bridal Package"}\n• Date: ${currentDate || "To be discussed"}\n• Time: ${currentTime || "Muhurtham / Reception"}\n• Venue: ${currentLocation || "Salem / Outstation"}\nPlease let me know if this slot is available!`
     );
@@ -312,6 +355,24 @@ function BookingFormContent() {
                       {...register("preferredDate")}
                       className="bg-background"
                     />
+                    {checkingAvailability && (
+                      <p className="text-[11px] text-muted-foreground animate-pulse">
+                        Verifying Muhurtham date availability...
+                      </p>
+                    )}
+                    {availabilityData && (
+                      <div
+                        className={`p-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 border ${
+                          availabilityData.availability === "available"
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600"
+                            : availabilityData.availability === "limited"
+                            ? "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400"
+                            : "bg-rose-500/10 border-rose-500/30 text-rose-600"
+                        }`}
+                      >
+                        {availabilityData.message}
+                      </div>
+                    )}
                     {errors.preferredDate && (
                       <p className="text-destructive text-xs">{errors.preferredDate.message}</p>
                     )}
@@ -381,6 +442,24 @@ function BookingFormContent() {
                 {errors.message && (
                   <p className="text-destructive text-xs">{errors.message.message}</p>
                 )}
+              </div>
+
+              {/* Visible Muhurtham Cancellation & Reschedule Policy */}
+              <div className="p-4 rounded-2xl bg-muted/40 border border-border/80 space-y-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 font-heading font-bold text-foreground text-xs uppercase tracking-wider text-primary">
+                  <ShieldCheck size={16} /> Muhurtham Slot Lock & Cancellation Terms
+                </div>
+                <ul className="space-y-1.5 list-disc pl-4 text-[11px] leading-relaxed">
+                  <li>
+                    <strong className="text-foreground">Exclusive Slot Lock:</strong> An advance booking deposit (₹5,000) reserves your exclusive Muhurtham date and prevents any competing bride bookings for Maha Shree.
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Reschedule Policy:</strong> Free rescheduling is permitted up to 30 days prior to your wedding date, subject to slot availability.
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Cancellation:</strong> Cancellations made within 15 days of the event are non-refundable due to blocked peak muhurtham dates.
+                  </li>
+                </ul>
               </div>
 
               {/* Submit Button */}

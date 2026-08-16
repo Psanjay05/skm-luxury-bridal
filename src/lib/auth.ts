@@ -40,15 +40,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           console.error("[AUTH_DB_ERROR]", dbErr);
         }
 
-        // Fallback for development if database is not yet seeded or offline
+        // Fallback for development if database is not yet seeded or offline (rotatable via env var)
+        const defaultAdminUser = process.env.ADMIN_DEFAULT_USERNAME || process.env.ADMIN_USERNAME || "admin";
+        const defaultAdminPass = process.env.ADMIN_DEFAULT_PASSWORD || process.env.ADMIN_PASSWORD || "LuxuryBridal@2026";
+
         if (
-          credentials.username === "admin" &&
-          credentials.password === "LuxuryBridal@2026"
+          credentials.username === defaultAdminUser &&
+          credentials.password === defaultAdminPass
         ) {
           return {
             id: "default-admin-id",
             name: "Maha Shree",
-            username: "admin",
+            username: defaultAdminUser,
           };
         }
 

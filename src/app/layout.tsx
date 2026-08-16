@@ -118,6 +118,9 @@ const jsonLd = {
   ],
 };
 
+import { LanguageProvider } from "@/context/LanguageContext";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -133,7 +136,10 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {children}
+        <GoogleAnalytics />
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

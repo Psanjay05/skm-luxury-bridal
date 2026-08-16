@@ -6,21 +6,25 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "../ui/button";
-
-const NAV_LINKS = [
-  { name: "Home", href: "/" },
-  { name: "About", href: "/about" },
-  { name: "Services", href: "/services" },
-  { name: "Gallery", href: "/gallery" },
-  { name: "Jewellery", href: "/jewellery-rental" },
-  { name: "Testimonials", href: "/testimonials" },
-  { name: "Contact", href: "/contact" },
-];
+import { LanguageToggle } from "./LanguageToggle";
+import { useLanguage } from "@/context/LanguageContext";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const navLinks = [
+    { name: t.nav.home, href: "/" },
+    { name: t.nav.about, href: "/about" },
+    { name: t.nav.services, href: "/services" },
+    { name: t.nav.gallery, href: "/gallery" },
+    { name: t.nav.jewellery, href: "/jewellery-rental" },
+    { name: t.nav.packages, href: "/bridal-packages" },
+    { name: t.nav.testimonials, href: "/testimonials" },
+    { name: t.nav.contact, href: "/contact" },
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -50,31 +54,35 @@ export function Header() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-8">
-          {NAV_LINKS.map((link) => (
+        <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
+          {navLinks.map((link) => (
             <Link
-              key={link.name}
+              key={link.href}
               href={link.href}
               className={`text-sm font-medium tracking-wide transition-colors hover:text-primary ${
-                pathname === link.href ? "text-primary" : "text-foreground/80"
+                pathname === link.href ? "text-primary font-semibold" : "text-foreground/80"
               }`}
             >
               {link.name}
             </Link>
           ))}
+          <LanguageToggle />
           <Button asChild className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90 px-6 tracking-widest uppercase text-xs">
-            <Link href="/booking">Book Now</Link>
+            <Link href="/booking">{t.nav.bookNow}</Link>
           </Button>
         </nav>
 
-        {/* Mobile Toggle */}
-        <button
-          className="lg:hidden text-foreground p-2"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle Menu"
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {/* Mobile Actions */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <LanguageToggle />
+          <button
+            className="text-foreground p-2"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Nav */}
@@ -87,13 +95,13 @@ export function Header() {
             className="lg:hidden bg-background border-b border-border overflow-hidden"
           >
             <nav className="flex flex-col p-4 space-y-4">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <Link
-                  key={link.name}
+                  key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`text-base font-medium p-2 transition-colors ${
-                    pathname === link.href ? "text-primary" : "text-foreground"
+                    pathname === link.href ? "text-primary font-semibold" : "text-foreground"
                   }`}
                 >
                   {link.name}
@@ -101,7 +109,7 @@ export function Header() {
               ))}
               <Button asChild className="w-full rounded-none bg-primary mt-4">
                 <Link href="/booking" onClick={() => setMobileMenuOpen(false)}>
-                  Book Now
+                  {t.nav.bookNow}
                 </Link>
               </Button>
             </nav>

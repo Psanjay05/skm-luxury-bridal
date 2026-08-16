@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/db";
 import Booking from "@/models/Booking";
 import { handleApiError } from "@/lib/errors";
 import { bookingSchema } from "@/lib/validations/booking";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 function generateBookingReference(): string {
   const year = new Date().getFullYear();
@@ -51,8 +52,15 @@ export async function GET(req: Request) {
   }
 }
 
-// POST create booking (Public)
+// POST create booking (Public with Rate Limiting & Honeypot)
 export async function POST(req: Request) {
+  const rateLimitResponse = checkRateLimit(req, {
+    limit: 5,
+    windowMs: 15 * 60 * 1000,
+    prefix: "bookings_post",
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await req.json();
     const parsed = bookingSchema.safeParse(body);

@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MessageSquare, Trash2, CheckCircle2, Clock, Search, ChevronDown, Send } from "lucide-react";
+import { formatUpiWhatsAppMessage } from "@/lib/upi";
 
 type Booking = {
   _id: string;
@@ -134,7 +135,12 @@ export default function BookingsPage() {
     } else if (template === "confirm") {
       message = `✨ Dear ${booking.customerName}, We are delighted to confirm your bridal appointment (${ref}) for ${booking.service} on ${dateFormatted} at ${booking.preferredTime} (Venue: ${booking.location}). Maha Shree & team look forward to making your big day magical!`;
     } else if (template === "payment") {
-      message = `Hello ${booking.customerName}, to block and reserve your wedding date (${dateFormatted}) with SKM Luxury Bridal Studio, kindly remit the advance booking deposit. Google Pay / UPI: 8608194233. Reference: ${ref}.`;
+      message = formatUpiWhatsAppMessage({
+        customerName: booking.customerName,
+        bookingReference: ref,
+        preferredDate: booking.preferredDate,
+        service: booking.service,
+      });
     } else if (template === "trial") {
       message = `Hello ${booking.customerName}, we would love to invite you to our studio in Salem for your personalized bridal makeup & saree draping trial session! Please let us know your preferred date & time.`;
     }

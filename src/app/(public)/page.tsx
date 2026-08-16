@@ -29,7 +29,12 @@ function InstagramIcon({ size = 20 }: { size?: number }) {
   );
 }
 
+import { useLanguage } from "@/context/LanguageContext";
+import { trackEvent } from "@/lib/gtag";
+
 export default function HomePage() {
+  const { t } = useLanguage();
+
   return (
     <>
       {/* HERO SECTION */}
@@ -49,38 +54,49 @@ export default function HomePage() {
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs uppercase tracking-[0.2em] font-medium">
-                <Sparkles size={14} className="animate-pulse text-primary" /> Salem's Premier Certified MUA Studio
+                <Sparkles size={14} className="animate-pulse text-primary" /> {t.hero.badge}
               </div>
 
               <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-medium tracking-tight leading-[1.1]">
-                Unveiling Your <br />
-                <span className="italic font-normal text-primary">Radiant Elegance</span> <br />
-                On Your Big Day
+                {t.hero.title1} <br />
+                <span className="italic font-normal text-primary">{t.hero.titleAccent}</span> <br />
+                {t.hero.title2}
               </h1>
 
               <p className="text-muted-foreground text-lg md:text-xl max-w-xl leading-relaxed">
-                Transforming every bride into a timeless masterpiece. Certified MUA packages by <strong className="text-foreground">Maha Shree</strong> starting from ₹999 for guest glam & ₹9,999 for bridal makeovers.
+                {t.hero.subtitle}
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-4">
-                <Button asChild size="lg" className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-xs tracking-widest uppercase font-semibold shadow-md hover:shadow-lg transition-all">
-                  <Link href="/booking">Book Consultation</Link>
+                <Button
+                  asChild
+                  size="lg"
+                  className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-xs tracking-widest uppercase font-semibold shadow-md hover:shadow-lg transition-all"
+                  onClick={() => trackEvent("booking_submit", { source: "hero_cta" })}
+                >
+                  <Link href="/booking">{t.hero.bookCta}</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="rounded-none border-primary/30 text-foreground hover:bg-primary/10 px-8 py-6 text-xs tracking-widest uppercase font-semibold">
-                  <Link href="/gallery">Explore Portfolio</Link>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="rounded-none border-primary/30 text-foreground hover:bg-primary/10 px-8 py-6 text-xs tracking-widest uppercase font-semibold"
+                  onClick={() => trackEvent("gallery_view_item", { source: "hero_portfolio" })}
+                >
+                  <Link href="/gallery">{t.hero.portfolioCta}</Link>
                 </Button>
               </div>
 
               {/* Quick Trust Badges */}
               <div className="pt-6 border-t border-border/60 flex flex-wrap gap-6 text-xs text-muted-foreground font-medium">
                 <div className="flex items-center gap-2">
-                  <Award size={16} className="text-primary" /> Certified Professional MUA
+                  <Award size={16} className="text-primary" /> {t.hero.certifiedBadge}
                 </div>
                 <div className="flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-primary" /> Sweat-Proof HD Base
+                  <ShieldCheck size={16} className="text-primary" /> {t.hero.sweatProofBadge}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Gem size={16} className="text-primary" /> Antique Jewellery Rental
+                  <Gem size={16} className="text-primary" /> {t.hero.jewelleryBadge}
                 </div>
               </div>
             </motion.div>

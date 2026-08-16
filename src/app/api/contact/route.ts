@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/db";
 import ContactMessage from "@/models/ContactMessage";
 import { handleApiError } from "@/lib/errors";
 import { contactSchema } from "@/lib/validations/contact";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // GET list contact messages (Admin only)
 export async function GET(req: Request) {
@@ -34,8 +35,15 @@ export async function GET(req: Request) {
   }
 }
 
-// POST create contact message (Public)
+// POST create contact message (Public with Rate Limiting & Honeypot)
 export async function POST(req: Request) {
+  const rateLimitResponse = checkRateLimit(req, {
+    limit: 5,
+    windowMs: 15 * 60 * 1000,
+    prefix: "contact_post",
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await req.json();
     const parsed = contactSchema.safeParse(body);

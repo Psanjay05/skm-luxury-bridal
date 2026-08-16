@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/db";
 import Testimonial from "@/models/Testimonial";
 import { handleApiError } from "@/lib/errors";
 import { testimonialSchema } from "@/lib/validations/testimonial";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // GET testimonials (Public GET returns non-deleted, option for all in admin)
 export async function GET(req: Request) {
@@ -25,8 +26,15 @@ export async function GET(req: Request) {
   }
 }
 
-// POST create/submit testimonial (Public)
+// POST create/submit testimonial (Public with Rate Limiting)
 export async function POST(req: Request) {
+  const rateLimitResponse = checkRateLimit(req, {
+    limit: 3,
+    windowMs: 30 * 60 * 1000,
+    prefix: "testimonials_post",
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await req.json();
     const parsed = testimonialSchema.safeParse(body);
