@@ -82,5 +82,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-  secret: process.env.AUTH_SECRET || "skm-luxury-bridal-super-secret-key-2026-development",
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "skm-luxury-bridal-super-secret-key-2026-development",
 });

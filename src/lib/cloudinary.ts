@@ -14,8 +14,14 @@ export async function uploadImageToCloudinary(
   fileBuffer: Buffer,
   folder = "skm-luxury-bridal/portfolio"
 ): Promise<{ url: string; public_id: string }> {
-  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_SECRET) {
-    throw new Error("Cloudinary credentials are not configured on server.");
+  if (
+    !process.env.CLOUDINARY_CLOUD_NAME ||
+    !process.env.CLOUDINARY_API_KEY ||
+    !process.env.CLOUDINARY_API_SECRET
+  ) {
+    throw new Error(
+      "Cloudinary credentials (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) are not configured on server."
+    );
   }
 
   return new Promise((resolve, reject) => {

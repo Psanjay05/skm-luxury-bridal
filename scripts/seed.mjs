@@ -180,16 +180,18 @@ async function seedDatabase() {
     console.log("Connected to MongoDB.");
 
     // Seed Admin
-    const existingAdmin = await Admin.findOne({ username: "admin" });
+    const adminUser = process.env.ADMIN_USERNAME || "admin";
+    const adminPass = process.env.ADMIN_PASSWORD || process.env.ADMIN_DEFAULT_PASSWORD || "LuxuryBridal@2026";
+    const existingAdmin = await Admin.findOne({ username: adminUser });
     if (!existingAdmin) {
-      console.log("Creating default admin user...");
-      const hashedPassword = await bcrypt.hash("LuxuryBridal@2026", 12);
+      console.log(`Creating default admin user (${adminUser})...`);
+      const hashedPassword = await bcrypt.hash(adminPass, 12);
       await Admin.create({
-        username: "admin",
+        username: adminUser,
         password: hashedPassword,
         name: "Maha Shree",
       });
-      console.log("Admin user created (Username: admin / Password: LuxuryBridal@2026)");
+      console.log(`Admin user created (Username: ${adminUser})`);
     } else {
       console.log("Admin user exists.");
     }
