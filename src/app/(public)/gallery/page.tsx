@@ -3,8 +3,29 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, X, Sparkles } from "lucide-react";
+import { Eye, X, Sparkles, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// Inline Instagram Icon
+function InstagramIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
+
+// Instagram post shortcodes from @maha_unique_brides_23
+const INSTAGRAM_POSTS = [
+  { code: "Dbi-qSYmMSN", caption: "Signature Hairdo Artistry" },
+  { code: "DbtQfaUGMml", caption: "Real Bride Transformation" },
+  { code: "Dbj4p3KGQHQ", caption: "Bridal Makeover Highlights" },
+  { code: "DZgQ3DJGRBY", caption: "HD Bridal Glam Session" },
+  { code: "DZXoNHAGzY6", caption: "Saree & Jewellery Styling" },
+  { code: "DYnPq1KGrHv", caption: "South Indian Bridal Look" },
+];
 
 const CATEGORIES = ["All", "Bridal", "Reception", "Engagement", "Guest", "Mehendi", "Jewellery", "Hairstyle", "Before & After"];
 
@@ -33,9 +54,9 @@ const FALLBACK_ITEMS = [
   {
     _id: "4",
     category: "Jewellery",
-    title: "Graceful Full Standing Bridal Pose",
-    altText: "Pre-Pleated Silk Saree, Gold Waist Belt (Ottiyanam) & Styling",
-    imageUrl: "/images/portfolio/full-bridal-pose-silk-saree.jpg",
+    title: "Royal Antique Temple Gold Grand Set",
+    altText: "Lakshmi Goddess motif antique temple gold necklace, choker, Jhumkas & Maang Tikka",
+    imageUrl: "/images/jewellery/antique-bridal-complete-set.jpg",
   },
   {
     _id: "5",
@@ -43,6 +64,62 @@ const FALLBACK_ITEMS = [
     title: "Glowing HD Bridal Close-Up",
     altText: "Maang Tikka, Temple Earrings & Soft Glam Glow",
     imageUrl: "/images/portfolio/bridal-close-up-portrait.jpg",
+  },
+  {
+    _id: "6",
+    category: "Jewellery",
+    title: "Lakshmi Haram Full Bridal Set",
+    altText: "Full Lakshmi Haram with Ottiyanam, Maang Tikka & chandelier earrings",
+    imageUrl: "/images/jewellery/lakshmi-haram-full-set.jpg",
+  },
+  {
+    _id: "7",
+    category: "Jewellery",
+    title: "Peacock Antique Bridal Set",
+    altText: "Peacock motif antique gold layered necklaces, Jhumkas & Vanki bangle",
+    imageUrl: "/images/jewellery/peacock-antique-bridal-set.jpg",
+  },
+  {
+    _id: "8",
+    category: "Jewellery",
+    title: "Matt Finish Antique Gold Grand Set",
+    altText: "Premium matte-finish Lakshmi pendant necklaces with Ottiyanam belt",
+    imageUrl: "/images/jewellery/antique-gold-bridal-set.jpg",
+  },
+  {
+    _id: "9",
+    category: "Jewellery",
+    title: "Bride Look – Jewellery on Blue Silk Saree",
+    altText: "Real bride wearing layered gold necklaces, Maang Tikka, Jhumkas & Vanki armlet",
+    imageUrl: "/images/jewellery/bride-wearing-jewellery.jpg",
+  },
+  {
+    _id: "10",
+    category: "Jewellery",
+    title: "Lakshmi Temple Display Grand Set",
+    altText: "Showstopper dual-layer haram with grand Ottiyanam & chandelier Jhumkas on mannequin",
+    imageUrl: "/images/jewellery/lakshmi-temple-display-set.jpg",
+  },
+  {
+    _id: "11",
+    category: "Jewellery",
+    title: "Nakshi Peacock Full Bridal Set",
+    altText: "Nakshi peacock motif antique gold layered necklaces with Jhumkas & Vanki bangle",
+    imageUrl: "/images/jewellery/nakshi-peacock-full-set.jpg",
+  },
+  {
+    _id: "12",
+    category: "Jewellery",
+    title: "Pearl Lakshmi Collage Set",
+    altText: "Pearl-drop Lakshmi temple necklace collage with Ottiyanam & antique Jhumkas",
+    imageUrl: "/images/jewellery/pearl-lakshmi-collage-set.jpg",
+  },
+  {
+    _id: "13",
+    category: "Jewellery",
+    title: "Grand Antique Multi-Layer Temple Set",
+    altText: "4-layer antique temple gold set with dual Ottiyanam strands & statement Jhumkas",
+    imageUrl: "/images/jewellery/grand-antique-multi-layer-set.jpg",
   },
 ];
 
@@ -216,6 +293,73 @@ export default function GalleryPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ── Live Instagram Feed Section ── */}
+        <div className="mt-24 space-y-10">
+          {/* Section Header */}
+          <div className="text-center space-y-3">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white text-xs font-bold uppercase tracking-wider shadow-md">
+              <InstagramIcon size={14} /> Live from @maha_unique_brides_23
+            </div>
+            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-foreground">
+              Latest Posts from Instagram
+            </h2>
+            <p className="text-muted-foreground text-sm max-w-xl mx-auto">
+              Live real-time updates from Maha Shree's official Instagram page. Follow for daily transformation reels, hairdo tutorials, and jewellery styling!
+            </p>
+          </div>
+
+          {/* Instagram Posts Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {INSTAGRAM_POSTS.map((post) => (
+              <div key={post.code} className="bg-card border border-border/80 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
+                {/* Thumbnail Placeholder */}
+                <a
+                  href={`https://www.instagram.com/p/${post.code}/`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block relative aspect-square bg-gradient-to-br from-purple-600/20 via-pink-500/20 to-amber-400/20 group"
+                >
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center p-4">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+                      <InstagramIcon size={28} />
+                    </div>
+                    <span className="text-sm font-semibold text-foreground">{post.caption}</span>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      View on Instagram <ExternalLink size={11} />
+                    </span>
+                  </div>
+                </a>
+                <div className="px-4 py-3 flex items-center justify-between border-t border-border/60">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                    <InstagramIcon size={14} />
+                    <span>@maha_unique_brides_23</span>
+                  </div>
+                  <a
+                    href={`https://www.instagram.com/p/${post.code}/`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary font-semibold hover:underline flex items-center gap-1"
+                  >
+                    Open <ExternalLink size={11} />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Follow CTA */}
+          <div className="text-center">
+            <a
+              href="https://www.instagram.com/maha_unique_brides_23"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-heading font-bold text-sm tracking-wider uppercase shadow-lg hover:shadow-2xl transition-all hover:scale-105"
+            >
+              <InstagramIcon size={20} /> View All Posts on Instagram <ExternalLink size={16} />
+            </a>
+          </div>
+        </div>
 
       </div>
     </div>
