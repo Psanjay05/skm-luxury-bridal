@@ -4,7 +4,8 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Star, Sparkles, Gem, ShieldCheck, HeartHandshake, PhoneCall, Award, ExternalLink } from "lucide-react";
+import { ArrowRight, Star, Sparkles, Gem, ShieldCheck, HeartHandshake, PhoneCall, Award, ExternalLink, SlidersHorizontal } from "lucide-react";
+import { BeforeAfterSlider } from "@/components/ui/before-after-slider";
 
 // Inline Instagram Icon
 function InstagramIcon({ size = 20 }: { size?: number }) {
@@ -267,6 +268,70 @@ export default function HomePage() {
               </div>
             </motion.div>
 
+          </div>
+        </div>
+      </section>
+
+      {/* INTERACTIVE MAKEOVER SPOTLIGHT (BEFORE & AFTER) */}
+      <section className="py-24 bg-card/60 border-t border-border/40 relative overflow-hidden">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="text-center mb-14 space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs uppercase tracking-[0.2em] font-semibold">
+              <SlidersHorizontal size={14} /> Real Transformation
+            </div>
+            <h2 className="font-heading text-4xl sm:text-5xl font-bold text-foreground">
+              HD Makeover Artistry in Motion
+            </h2>
+            <div className="w-16 h-1 bg-primary mx-auto" />
+            <p className="text-muted-foreground max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
+              Drag the interactive slider below to see how Maha Shree enhances real skin with waterproof, sweat-resistant bridal pigments.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <div className="lg:col-span-6 flex justify-center">
+              <div className="w-full max-w-md">
+                <BeforeAfterSlider
+                  beforeImage="/images/portfolio/before-after-hd-makeover.jpg"
+                  afterImage="/images/portfolio/bridal-close-up-portrait.jpg"
+                  beforeLabel="Natural Skin"
+                  afterLabel="HD Bridal Glam"
+                  aspectRatio="4/5"
+                />
+              </div>
+            </div>
+
+            <div className="lg:col-span-6 space-y-6 text-left">
+              <span className="text-xs uppercase font-bold tracking-widest text-primary px-3 py-1 rounded-full bg-primary/10 inline-block">
+                Maha Shree's Signature Method
+              </span>
+              <h3 className="font-heading text-3xl font-bold text-foreground leading-tight">
+                No Patchiness. No Flashback. Pure Natural Radiance.
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Using micro-pigment color correction and premium bridal setting formulas, our HD makeup holds flawlessly under tropical wedding mandap heat, humid hall lighting, and high-resolution 4K photography.
+              </p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-background/80 border border-border space-y-1">
+                  <span className="text-sm font-bold text-foreground">Sweat-Proof 18h</span>
+                  <p className="text-xs text-muted-foreground">Formulated for South Indian Muhurtham heat</p>
+                </div>
+                <div className="p-4 rounded-xl bg-background/80 border border-border space-y-1">
+                  <span className="text-sm font-bold text-foreground">Saree Draping</span>
+                  <p className="text-xs text-muted-foreground">Sharp box pleating & pre-ironed folds</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4 pt-2">
+                <Button asChild className="bg-primary text-primary-foreground text-xs uppercase tracking-widest font-semibold px-6 py-5">
+                  <Link href="/bridal-packages">Explore Packages & Pricing</Link>
+                </Button>
+                <Button asChild variant="outline" className="border-primary/30 text-xs uppercase tracking-widest font-semibold px-6 py-5">
+                  <Link href="/gallery">View Full Transformations</Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>

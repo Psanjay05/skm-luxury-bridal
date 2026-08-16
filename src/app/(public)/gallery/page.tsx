@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, X, Sparkles, ExternalLink } from "lucide-react";
+import { Eye, X, Sparkles, ExternalLink, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BeforeAfterSlider } from "@/components/ui/before-after-slider";
 
 // Inline Instagram Icon
 function InstagramIcon({ size = 20 }: { size?: number }) {
@@ -162,6 +163,63 @@ export default function GalleryPage() {
           <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
             Real brides transformed by <strong className="text-foreground">Maha Shree</strong> at SKM Luxury Bridal Studio. Exploring HD makeup, saree box pleating, and antique jewellery styling.
           </p>
+        </div>
+
+        {/* Featured Transformation Slider Spotlight */}
+        <div className="max-w-4xl mx-auto mb-16 bg-card border border-primary/20 rounded-3xl p-6 sm:p-8 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-border pb-4">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider mb-1">
+                <SlidersHorizontal size={14} /> Interactive Transformation
+              </div>
+              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
+                Before & After HD Artistry
+              </h2>
+            </div>
+            <p className="text-xs text-muted-foreground max-w-xs sm:text-right">
+              Slide horizontally to witness the skin texture preservation & HD sweat-proof finish by Maha Shree.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <BeforeAfterSlider
+              beforeImage="/images/portfolio/before-after-hd-makeover.jpg"
+              afterImage="/images/portfolio/bridal-close-up-portrait.jpg"
+              beforeLabel="Natural Skin Base"
+              afterLabel="HD Bridal Glow"
+              aspectRatio="4/5"
+            />
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <span className="text-xs uppercase font-bold tracking-widest text-primary px-2.5 py-1 bg-primary/10 rounded-full inline-block">
+                  Signature Muhurtham Base
+                </span>
+                <h3 className="font-heading text-2xl font-bold text-foreground">Flawless, Camera-Ready Finish</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Every bride receives custom color correction, waterproof HD coverage engineered to withstand stage lighting and tears, perfectly paired with traditional temple gold jewellery.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="p-3.5 rounded-xl bg-background border border-border/80 space-y-1">
+                  <span className="text-xs font-bold text-foreground block">18+ Hours</span>
+                  <span className="text-[11px] text-muted-foreground">Sweat & smudge resistant durability</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-background border border-border/80 space-y-1">
+                  <span className="text-xs font-bold text-foreground block">Skin Match</span>
+                  <span className="text-[11px] text-muted-foreground">True undertone shade blending</span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <Button asChild className="w-full bg-primary text-primary-foreground text-xs uppercase tracking-widest font-semibold py-5">
+                  <a href="/booking?service=HD%20Bridal%20Makeover">
+                    Book This HD Look <Eye size={14} className="ml-1" />
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Categories / Interactive Filter Tabs */}

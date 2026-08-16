@@ -9,7 +9,13 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { MessageSquare, Trash2, CheckCircle2, Clock, Search } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MessageSquare, Trash2, CheckCircle2, Clock, Search, ChevronDown, Send } from "lucide-react";
 
 type Booking = {
   _id: string;
@@ -109,14 +115,31 @@ export default function BookingsPage() {
     }
   };
 
-  const getWhatsAppLink = (booking: Booking) => {
+  const getWhatsAppLink = (
+    booking: Booking,
+    template: "general" | "confirm" | "payment" | "trial" = "general"
+  ) => {
     const cleanPhone = booking.phone.replace(/[^0-9]/g, "");
     const phoneWithCountry = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-    const ref = booking.bookingReference ?? "Your Booking";
-    const text = encodeURIComponent(
-      `Hello ${booking.customerName}, this is Maha Shree from SKM Luxury Bridal Studio regarding your booking request (${ref}) for ${booking.service} on ${new Date(booking.preferredDate).toLocaleDateString("en-IN")}.`
-    );
-    return `https://wa.me/${phoneWithCountry}?text=${text}`;
+    const ref = booking.bookingReference ?? `SKM-${booking._id.slice(-6).toUpperCase()}`;
+    const dateFormatted = new Date(booking.preferredDate).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
+    let message = "";
+    if (template === "general") {
+      message = `Hello ${booking.customerName}, this is Maha Shree from SKM Luxury Bridal Studio regarding your booking request (${ref}) for ${booking.service} on ${dateFormatted}. How may I help you today?`;
+    } else if (template === "confirm") {
+      message = `✨ Dear ${booking.customerName}, We are delighted to confirm your bridal appointment (${ref}) for ${booking.service} on ${dateFormatted} at ${booking.preferredTime} (Venue: ${booking.location}). Maha Shree & team look forward to making your big day magical!`;
+    } else if (template === "payment") {
+      message = `Hello ${booking.customerName}, to block and reserve your wedding date (${dateFormatted}) with SKM Luxury Bridal Studio, kindly remit the advance booking deposit. Google Pay / UPI: 8608194233. Reference: ${ref}.`;
+    } else if (template === "trial") {
+      message = `Hello ${booking.customerName}, we would love to invite you to our studio in Salem for your personalized bridal makeup & saree draping trial session! Please let us know your preferred date & time.`;
+    }
+
+    return `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(message)}`;
   };
 
   return (
@@ -215,15 +238,43 @@ export default function BookingsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end items-center gap-2">
-                      <a
-                        href={getWhatsAppLink(b)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors"
-                        title="Contact client on WhatsApp"
-                      >
-                        <MessageSquare size={13} /> WhatsApp
-                      </a>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors shadow-sm cursor-pointer"
+                        >
+                          <MessageSquare size={13} /> WhatsApp <ChevronDown size={11} />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg p-1">
+                          <DropdownMenuItem
+                            onClick={() => window.open(getWhatsAppLink(b, "general"), "_blank")}
+                            className="text-xs cursor-pointer py-2 px-2.5 hover:bg-muted rounded"
+                          >
+                            <span className="font-semibold block text-foreground">💬 Quick Chat</span>
+                            <span className="text-[10px] text-muted-foreground">General greeting message</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => window.open(getWhatsAppLink(b, "confirm"), "_blank")}
+                            className="text-xs cursor-pointer py-2 px-2.5 hover:bg-muted rounded"
+                          >
+                            <span className="font-semibold block text-emerald-600">✨ Send Confirmation</span>
+                            <span className="text-[10px] text-muted-foreground">Slot & venue details</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => window.open(getWhatsAppLink(b, "payment"), "_blank")}
+                            className="text-xs cursor-pointer py-2 px-2.5 hover:bg-muted rounded"
+                          >
+                            <span className="font-semibold block text-blue-600">💳 Send Advance / UPI Info</span>
+                            <span className="text-[10px] text-muted-foreground">Google Pay / deposit details</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => window.open(getWhatsAppLink(b, "trial"), "_blank")}
+                            className="text-xs cursor-pointer py-2 px-2.5 hover:bg-muted rounded"
+                          >
+                            <span className="font-semibold block text-primary">💄 Invite to Studio Trial</span>
+                            <span className="text-[10px] text-muted-foreground">Salem makeup trial session</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
 
                       {b.status === "pending" && (
                         <Button

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Sparkles, Check, ArrowRight, Calculator, Star } from "lucide-react";
+import { Sparkles, Check, ArrowRight, Calculator, Star, PhoneCall } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
@@ -273,15 +273,33 @@ export default function BridalPackagesPage() {
             </div>
           </div>
 
-          <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-muted-foreground">
-              Selected: <strong className="text-foreground">{selectedFunctions.join(", ") || "None"}</strong> with addons: <strong className="text-foreground">{selectedAddons.join(", ") || "None"}</strong>.
-            </p>
-            <Button asChild size="lg" className="w-full sm:w-auto bg-primary text-primary-foreground font-semibold tracking-wide py-6">
-              <Link href={`/booking?service=Custom%20Package%20(Est%20₹${calculateTotal()})`}>
-                Reserve This Custom Package <ArrowRight size={16} className="ml-1" />
-              </Link>
-            </Button>
+          <div className="border-t border-border pt-6 flex flex-col lg:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-center lg:text-left">
+              <p className="text-xs text-muted-foreground">
+                Selected: <strong className="text-foreground">{selectedFunctions.join(", ") || "None"}</strong> with addons: <strong className="text-foreground">{selectedAddons.join(", ") || "None"}</strong>.
+              </p>
+              <p className="text-[11px] text-primary/80">
+                Instant confirmation available directly via WhatsApp or Online Booking.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-3 w-full lg:w-auto">
+              <Button asChild size="lg" className="w-full sm:w-auto bg-primary text-primary-foreground font-semibold tracking-wide py-6 shadow-md">
+                <Link href={`/booking?service=Custom%20Package%20(Est%20₹${calculateTotal()})`}>
+                  Reserve Online <ArrowRight size={16} className="ml-1" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto border-primary/30 py-6 gap-2 font-semibold">
+                <a
+                  href={`https://wa.me/918608194233?text=${encodeURIComponent(
+                    `Hello Maha Shree, I calculated a custom bridal package on your website for ₹${calculateTotal().toLocaleString("en-IN")}:\n• Functions: ${selectedFunctions.join(", ") || "None"}\n• Add-ons: ${selectedAddons.join(", ") || "None"}\nPlease let me know your availability!`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <PhoneCall size={16} className="text-primary" /> WhatsApp Quote
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
