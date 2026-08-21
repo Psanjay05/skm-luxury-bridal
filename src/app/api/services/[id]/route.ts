@@ -5,6 +5,7 @@ import connectToDatabase from "@/lib/db";
 import Service from "@/models/Service";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
 import { serviceSchema } from "@/lib/validations/service";
+import { INITIAL_SERVICES } from "@/app/api/services/route";
 
 // PATCH update service (Admin only)
 export async function PATCH(
@@ -33,10 +34,23 @@ export async function PATCH(
     }
 
     await connectToDatabase();
-    const service = await Service.findByIdAndUpdate(id, parsed.data, { new: true });
+    let service = await Service.findByIdAndUpdate(id, parsed.data, { new: true });
+
+    // If item was loaded from initial dataset and not yet in DB, upsert it
+    if (!service) {
+      const initialMatch = INITIAL_SERVICES.find((s) => s._id === id);
+      if (initialMatch) {
+        const { _id: _, ...initialData } = initialMatch;
+        service = await Service.create({
+          _id: id,
+          ...initialData,
+          ...parsed.data,
+        });
+      }
+    }
 
     if (!service) {
-      return NextResponse.json({ success: false, error: "Service not found" }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Service not found in database" }, { status: 404 });
     }
 
     // Instant cache revalidation on website

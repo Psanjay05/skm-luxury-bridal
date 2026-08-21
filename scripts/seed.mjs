@@ -17,6 +17,8 @@ const ServiceSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
+    price: { type: String, required: true, default: "From ₹9,999" },
+    tagline: { type: String },
     imageUrl: { type: String, required: true },
     iconUrl: { type: String },
     ctaText: { type: String, default: "Book Now" },
@@ -65,7 +67,35 @@ const Testimonial = mongoose.models.Testimonial || mongoose.model("Testimonial",
 
 const INITIAL_SERVICES = [
   {
+    title: "Classic Bridal Package",
+    price: "₹18,000",
+    tagline: "Essential HD makeover for budget-conscious brides",
+    description: "High Definition (HD) Foundation Base, Traditional Hair Styling & Flower Draping, Saree Box Pleating, Eyelash Extension, Studio Consultation.",
+    imageUrl: "/images/portfolio/traditional-south-indian-bride.jpg",
+    category: "bridal_package",
+    ctaText: "Book Classic Package",
+  },
+  {
+    title: "Royal HD Makeover Package",
+    price: "₹25,000",
+    tagline: "Our most popular 2-event Muhurtham + Reception package",
+    description: "HD Base for Muhurtham & Reception, 2 Hairstyles, Premium Saree Pre-Pleating, Free Trial Session, Jewellery Discount, Mother Touch-Up.",
+    imageUrl: "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
+    category: "bridal_package",
+    ctaText: "Book Royal HD Package",
+  },
+  {
+    title: "Luxury Airbrush Grand Package",
+    price: "₹35,000",
+    tagline: "18+ Hour waterproof Airbrush finish for grand stage weddings",
+    description: "18-Hour Waterproof Airbrush Base, 3 Event Looks, Senior Hairstylist & Saree Team, Studio Trial, Temple Jewellery Included, 2 Family Touch-Ups.",
+    imageUrl: "/images/portfolio/before-after-hd-makeover.jpg",
+    category: "bridal_package",
+    ctaText: "Book Luxury Airbrush",
+  },
+  {
     title: "Royal HD Bridal Makeover",
+    price: "From ₹9,999",
     description: "Flawless sweat-proof high-definition base makeup, false lash application, custom lip artistry, and saree draping for Muhurtham.",
     imageUrl: "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
     category: "makeup",
@@ -73,6 +103,7 @@ const INITIAL_SERVICES = [
   },
   {
     title: "Airbrush Luxury Bridal Package",
+    price: "From ₹12,999",
     description: "Ultra long-lasting 18+ hour waterproof airbrush makeup finish, premium temple hair ornament styling, and jewelry draping.",
     imageUrl: "/images/portfolio/before-after-hd-makeover.jpg",
     category: "makeup",
@@ -80,6 +111,7 @@ const INITIAL_SERVICES = [
   },
   {
     title: "Reception & Engagement Glam",
+    price: "From ₹7,999",
     description: "Soft glam HD finish, customized hairstyle, modern drape pleating, and accessory placement for reception functions.",
     imageUrl: "/images/portfolio/bridal-close-up-portrait.jpg",
     category: "makeup",
@@ -87,6 +119,7 @@ const INITIAL_SERVICES = [
   },
   {
     title: "Saree Pre-Pleating & Box Folding",
+    price: "From ₹800",
     description: "Professional saree pre-pleating, iron pressing, and box folding for silk sarees for hassle-free drape on wedding day.",
     imageUrl: "/images/portfolio/full-bridal-pose-silk-saree.jpg",
     category: "saree",
@@ -94,6 +127,7 @@ const INITIAL_SERVICES = [
   },
   {
     title: "Temple & Antique Jewellery Rental",
+    price: "From ₹1,200",
     description: "Premium gold-plated temple necklaces, waist belts (ottiyanam), maang tikka, and bangles for bridal functions.",
     imageUrl: "/images/portfolio/traditional-south-indian-bride.jpg",
     category: "jewellery",

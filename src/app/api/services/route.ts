@@ -9,7 +9,7 @@ import { serviceSchema } from "@/lib/validations/service";
 export const INITIAL_SERVICES = [
   // Bridal Packages
   {
-    _id: "pkg_1",
+    _id: "65a000000000000000000001",
     title: "Classic Bridal Package",
     price: "₹18,000",
     tagline: "Essential HD makeover for budget-conscious brides",
@@ -19,7 +19,7 @@ export const INITIAL_SERVICES = [
     ctaText: "Book Classic Package",
   },
   {
-    _id: "pkg_2",
+    _id: "65a000000000000000000002",
     title: "Royal HD Makeover Package",
     price: "₹25,000",
     tagline: "Our most popular 2-event Muhurtham + Reception package",
@@ -29,7 +29,7 @@ export const INITIAL_SERVICES = [
     ctaText: "Book Royal HD Package",
   },
   {
-    _id: "pkg_3",
+    _id: "65a000000000000000000003",
     title: "Luxury Airbrush Grand Package",
     price: "₹35,000",
     tagline: "18+ Hour waterproof Airbrush finish for grand stage weddings",
@@ -40,7 +40,7 @@ export const INITIAL_SERVICES = [
   },
   // Makeup Services
   {
-    _id: "srv_1",
+    _id: "65a000000000000000000004",
     title: "HD Sweat-Proof Bridal Makeup",
     price: "From ₹9,999",
     description: "Long-lasting high-definition pigments for camera clarity and natural skin finish.",
@@ -49,7 +49,7 @@ export const INITIAL_SERVICES = [
     ctaText: "Book HD Makeup",
   },
   {
-    _id: "srv_2",
+    _id: "65a000000000000000000005",
     title: "Airbrush Waterproof Makeover",
     price: "From ₹12,999",
     description: "18+ hour stage-ready waterproof airbrush finish for heavy mandap heat.",
@@ -58,7 +58,7 @@ export const INITIAL_SERVICES = [
     ctaText: "Book Airbrush",
   },
   {
-    _id: "srv_3",
+    _id: "65a000000000000000000006",
     title: "Engagement & Reception Glam",
     price: "From ₹7,999",
     description: "Customized soft glam for evening reception and engagement functions.",
@@ -67,7 +67,7 @@ export const INITIAL_SERVICES = [
     ctaText: "Book Reception Glam",
   },
   {
-    _id: "srv_4",
+    _id: "65a000000000000000000007",
     title: "Guest & Family Makeup",
     price: "From ₹999",
     description: "Party makeover and touch-ups for family members and bridesmaids.",
@@ -77,7 +77,7 @@ export const INITIAL_SERVICES = [
   },
   // Hair & Saree
   {
-    _id: "srv_5",
+    _id: "65a000000000000000000008",
     title: "South Indian Mogra Gajra Jada",
     price: "From ₹2,500",
     description: "Classic fresh floral braid extensions and traditional hair artistry.",
@@ -86,7 +86,7 @@ export const INITIAL_SERVICES = [
     ctaText: "Book Hairstyle",
   },
   {
-    _id: "srv_6",
+    _id: "65a000000000000000000009",
     title: "French Bubble Pearl Braid",
     price: "From ₹3,000",
     description: "Modern braided crown with pearl pins and crystal accessories.",
@@ -95,7 +95,7 @@ export const INITIAL_SERVICES = [
     ctaText: "Book Modern Hairstyle",
   },
   {
-    _id: "srv_7",
+    _id: "65a000000000000000000010",
     title: "Temple Silver Choti Medallions",
     price: "From ₹2,000",
     description: "Traditional coin medallion hair jewellery styling and thick braid.",
@@ -104,7 +104,7 @@ export const INITIAL_SERVICES = [
     ctaText: "Book Temple Hairdo",
   },
   {
-    _id: "srv_8",
+    _id: "65a000000000000000000011",
     title: "Saree Box Pleating & Folding",
     price: "From ₹800",
     description: "Iron pressing and pre-pleating for hassle-free drape on wedding day.",
@@ -114,7 +114,7 @@ export const INITIAL_SERVICES = [
   },
   // Jewellery & Rentals
   {
-    _id: "srv_9",
+    _id: "65a000000000000000000012",
     title: "Antique Jewellery Rental",
     price: "From ₹1,200",
     description: "Temple gold, antique chokers, and ottiyanam waist belts for bridal functions.",
@@ -123,7 +123,7 @@ export const INITIAL_SERVICES = [
     ctaText: "Explore Rentals",
   },
   {
-    _id: "srv_10",
+    _id: "65a000000000000000000013",
     title: "Bridal & Guest Mehendi",
     price: "From ₹1,500",
     description: "Customized intricate organic henna designs for bride and guests.",
@@ -132,7 +132,7 @@ export const INITIAL_SERVICES = [
     ctaText: "Book Mehendi",
   },
   {
-    _id: "srv_11",
+    _id: "65a000000000000000000014",
     title: "Studio Trial & Matching Session",
     price: "From ₹999",
     description: "Personalized saree drape and foundation shade matching consultation at studio.",
@@ -141,7 +141,7 @@ export const INITIAL_SERVICES = [
     ctaText: "Book Studio Trial",
   },
   {
-    _id: "srv_12",
+    _id: "65a000000000000000000015",
     title: "Outstation Travel Team",
     price: "Contact Us",
     description: "Senior styling team available across Salem, Tamil Nadu, Bangalore and South India.",

@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/db";
 import Gallery from "@/models/Gallery";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
 import { gallerySchema } from "@/lib/validations/gallery";
+import { INITIAL_GALLERY_ITEMS } from "@/app/api/gallery/route";
 
 // PATCH update gallery item (Admin only)
 export async function PATCH(
@@ -32,7 +33,19 @@ export async function PATCH(
     }
 
     await connectToDatabase();
-    const item = await Gallery.findByIdAndUpdate(id, parsed.data, { new: true });
+    let item = await Gallery.findByIdAndUpdate(id, parsed.data, { new: true });
+
+    if (!item) {
+      const initialMatch = INITIAL_GALLERY_ITEMS.find((g) => g._id === id);
+      if (initialMatch) {
+        const { _id: _, ...initialData } = initialMatch;
+        item = await Gallery.create({
+          _id: id,
+          ...initialData,
+          ...parsed.data,
+        });
+      }
+    }
 
     if (!item) {
       return NextResponse.json({ success: false, error: "Gallery item not found" }, { status: 404 });
