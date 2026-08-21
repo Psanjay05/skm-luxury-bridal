@@ -213,7 +213,7 @@ function BookingFormContent() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center pt-4">
             <a
               href={`https://wa.me/918608194233?text=${encodeURIComponent(
                 `Hi Maha Shree, I just submitted an appointment request on your website with reference ${successRef}. Looking forward to connecting!`
@@ -225,10 +225,15 @@ function BookingFormContent() {
                 <MessageCircle size={18} /> Connect with Maha Shree on WhatsApp
               </Button>
             </a>
+            <a href="tel:+918608194233">
+              <Button variant="outline" className="w-full sm:w-auto gap-2 py-6 border-primary/30 text-foreground hover:bg-primary/10">
+                <PhoneCall size={16} className="text-primary" /> Call +91 8608194233
+              </Button>
+            </a>
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => setSuccessRef(null)}
-              className="w-full sm:w-auto gap-2 py-6"
+              className="w-full sm:w-auto gap-2 py-6 text-muted-foreground"
             >
               <RefreshCw size={16} /> Submit Another Booking
             </Button>

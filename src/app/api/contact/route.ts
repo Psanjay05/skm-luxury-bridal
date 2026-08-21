@@ -6,6 +6,7 @@ import { handleApiError } from "@/lib/errors";
 import { contactSchema } from "@/lib/validations/contact";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getLocalMessages, saveLocalMessage } from "@/lib/local-store";
+import { sendMessageNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -95,8 +96,27 @@ export async function POST(req: Request) {
       console.warn("[POST_CONTACT] DB offline, saved to local store fallback:", dbErr);
     }
 
+    // 3. Trigger automated notifications
+    let notificationResult = null;
+    try {
+      notificationResult = await sendMessageNotification({
+        name: messageData.name,
+        email: messageData.email,
+        phone: messageData.phone,
+        message: messageData.message,
+      });
+    } catch (notifErr) {
+      console.warn("[MESSAGE_NOTIFICATION_ERROR]", notifErr);
+    }
+
     return NextResponse.json(
-      { success: true, data: { id: record._id } },
+      {
+        success: true,
+        data: {
+          id: record._id,
+          whatsappAdminUrl: notificationResult?.whatsappAdminUrl,
+        },
+      },
       { status: 201, headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (err) {

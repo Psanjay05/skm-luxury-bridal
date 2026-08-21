@@ -121,7 +121,7 @@ export default function BookingsPage() {
 
   const getWhatsAppLink = (
     booking: Booking,
-    template: "general" | "confirm" | "payment" | "trial" = "general"
+    template: "general" | "confirm" | "payment" | "trial" | "checklist" = "general"
   ) => {
     const cleanPhone = booking.phone.replace(/[^0-9]/g, "");
     const phoneWithCountry = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
@@ -146,6 +146,15 @@ export default function BookingsPage() {
       });
     } else if (template === "trial") {
       message = `Hello ${booking.customerName}, we would love to invite you to our studio in Salem for your personalized bridal makeup & saree draping trial session! Please let us know your preferred date & time.`;
+    } else if (template === "checklist") {
+      message = `👰 *Muhurtham & Event Day Preparation Checklist by Maha Shree:*
+1. Wash & dry your hair without heavy oil before arrival.
+2. Cleanse and moisturize your face; avoid new facial treatments within 48 hours.
+3. Keep your wedding saree, blouse, matching innerwear, and jewelry ready.
+4. Have your fresh flowers (Mogra/Gajra) kept in a cool space.
+5. Scheduled arrival time: ${booking.preferredTime} at ${booking.location}.
+
+Looking forward to your stunning bridal makeover! ❤️`;
     }
 
     return `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(message)}`;
@@ -281,6 +290,13 @@ export default function BookingsPage() {
                           >
                             <span className="font-semibold block text-primary">💄 Invite to Studio Trial</span>
                             <span className="text-[10px] text-muted-foreground">Salem makeup trial session</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => window.open(getWhatsAppLink(b, "checklist"), "_blank")}
+                            className="text-xs cursor-pointer py-2 px-2.5 hover:bg-muted rounded"
+                          >
+                            <span className="font-semibold block text-amber-600">📋 Event Day Prep Checklist</span>
+                            <span className="text-[10px] text-muted-foreground">Hair, skin & arrival reminders</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

@@ -6,6 +6,7 @@ import { handleApiError } from "@/lib/errors";
 import { bookingSchema } from "@/lib/validations/booking";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getLocalBookings, saveLocalBooking } from "@/lib/local-store";
+import { sendBookingNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -135,12 +136,31 @@ export async function POST(req: Request) {
       console.warn("[POST_BOOKING] DB offline, persisted in local store:", dbErr);
     }
 
+    // 3. Trigger automated notifications (Email, Webhook, and WhatsApp Link)
+    let notificationResult = null;
+    try {
+      notificationResult = await sendBookingNotification({
+        customerName: bookingData.customerName,
+        email: bookingData.email,
+        phone: bookingData.phone,
+        service: bookingData.service,
+        preferredDate: bookingData.preferredDate,
+        preferredTime: bookingData.preferredTime || "Morning",
+        location: bookingData.location,
+        message: bookingData.message,
+        bookingReference,
+      });
+    } catch (notifErr) {
+      console.warn("[BOOKING_NOTIFICATION_ERROR]", notifErr);
+    }
+
     return NextResponse.json(
       {
         success: true,
         data: {
           id: record._id,
           bookingReference: record.bookingReference,
+          whatsappAdminUrl: notificationResult?.whatsappAdminUrl,
         },
       },
       {
