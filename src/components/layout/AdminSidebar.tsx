@@ -40,7 +40,7 @@ export function AdminSidebar() {
     <motion.aside
       animate={{ width: collapsed ? 72 : 240 }}
       transition={{ duration: 0.25, ease: "easeInOut" }}
-      className="shrink-0 bg-card border-r border-border flex flex-col h-screen sticky top-0 overflow-hidden z-40"
+      className="hidden md:flex shrink-0 bg-card border-r border-border flex-col h-screen sticky top-0 overflow-hidden z-40"
     >
       {/* Logo */}
       <div className="flex items-center justify-between p-4 border-b border-border h-16">

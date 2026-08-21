@@ -1,12 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Scissors, Heart, ArrowRight, PhoneCall } from "lucide-react";
 
-const SERVICES = [
+type ServiceItem = {
+  title: string;
+  desc: string;
+  price: string;
+};
+
+const DEFAULT_SERVICES = [
   {
     category: "Bridal Makeup & Skin Finish",
     icon: Sparkles,
@@ -53,9 +60,37 @@ const HAIRSTYLE_CATALOG = [
 ];
 
 export default function ServicesPage() {
+  const [sections, setSections] = useState(DEFAULT_SERVICES);
+
+  useEffect(() => {
+    async function fetchLiveServices() {
+      try {
+        const res = await fetch("/api/services");
+        const json = await res.json();
+        if (res.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const dbServices: Array<{ title: string; description: string; price: string; category: string }> = json.data;
+
+          setSections((prevSections) =>
+            prevSections.map((sec) => {
+              const updatedItems = sec.items.map((item) => {
+                const match = dbServices.find(
+                  (dbItem) => dbItem.title.toLowerCase().trim() === item.title.toLowerCase().trim()
+                );
+                return match ? { ...item, price: match.price, desc: match.description || item.desc } : item;
+              });
+              return { ...sec, items: updatedItems };
+            })
+          );
+        }
+      } catch (err) {
+        console.warn("[SERVICES_PAGE] Failed to fetch live prices, using fallback:", err);
+      }
+    }
+    fetchLiveServices();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
-
       {/* Hero Banner */}
       <section className="relative h-[52vh] min-h-[320px] flex items-end overflow-hidden">
         <div className="absolute inset-0">
@@ -80,14 +115,13 @@ export default function ServicesPage() {
       </section>
 
       <div className="container mx-auto px-4 max-w-6xl pt-6 pb-20">
-
         <p className="text-muted-foreground text-base max-w-2xl mx-auto leading-relaxed text-center mb-20">
           Certified MUA packages by <strong className="text-foreground">Maha Shree</strong> (@maha_unique_brides_23). High-definition makeup, saree box pleating, and signature bridal hair artistry.
         </p>
 
         {/* Service Sections with Alternating Image Layout */}
         <div className="space-y-24 mb-24">
-          {SERVICES.map((section, index) => {
+          {sections.map((section, index) => {
             const IconComp = section.icon;
             const isEven = index % 2 === 0;
             return (
@@ -121,7 +155,7 @@ export default function ServicesPage() {
                       <div key={i} className="group bg-card border border-border/70 hover:border-primary/50 p-4 rounded-xl shadow-sm hover:shadow-md transition-all">
                         <h3 className="font-heading font-bold text-sm text-foreground group-hover:text-primary transition-colors leading-snug mb-1">{item.title}</h3>
                         <p className="text-xs text-muted-foreground leading-relaxed mb-2">{item.desc}</p>
-                        <span className="text-xs font-bold text-primary">{item.price}</span>
+                        <span className="text-xs font-bold text-primary font-mono">{item.price}</span>
                       </div>
                     ))}
                   </div>
@@ -185,10 +219,7 @@ export default function ServicesPage() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
 }
-
-

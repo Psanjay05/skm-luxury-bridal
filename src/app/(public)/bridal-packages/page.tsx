@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Sparkles, Check, ArrowRight, Calculator, Star, PhoneCall, FileText } from "lucide-react";
@@ -18,7 +18,7 @@ interface PackageTier {
   cta: string;
 }
 
-const PACKAGES: PackageTier[] = [
+const DEFAULT_PACKAGES: PackageTier[] = [
   {
     name: "Classic Bridal Package",
     price: "₹18,000",
@@ -64,10 +64,35 @@ const PACKAGES: PackageTier[] = [
 ];
 
 export default function BridalPackagesPage() {
+  const [packages, setPackages] = useState<PackageTier[]>(DEFAULT_PACKAGES);
   // Package customizer interactive state
   const [selectedFunctions, setSelectedFunctions] = useState<string[]>(["Muhurtham"]);
   const [selectedAddons, setSelectedAddons] = useState<string[]>(["Saree Box Pleating"]);
   const [showPrintModal, setShowPrintModal] = useState(false);
+
+  useEffect(() => {
+    async function fetchLivePackages() {
+      try {
+        const res = await fetch("/api/services");
+        const json = await res.json();
+        if (res.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const dbServices: Array<{ title: string; price: string; tagline?: string }> = json.data;
+
+          setPackages((prev) =>
+            prev.map((pkg) => {
+              const match = dbServices.find(
+                (s) => s.title.toLowerCase().trim() === pkg.name.toLowerCase().trim()
+              );
+              return match ? { ...pkg, price: match.price, tagline: match.tagline || pkg.tagline } : pkg;
+            })
+          );
+        }
+      } catch (err) {
+        console.warn("[BRIDAL_PACKAGES] Using fallback packages:", err);
+      }
+    }
+    fetchLivePackages();
+  }, []);
 
   const functionsList = [
     { name: "Muhurtham", cost: 12000 },
@@ -128,7 +153,7 @@ export default function BridalPackagesPage() {
 
         {/* Tier Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-          {PACKAGES.map((pkg, idx) => (
+          {packages.map((pkg, idx) => (
             <motion.div
               key={pkg.name}
               initial={{ opacity: 0, y: 20 }}

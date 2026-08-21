@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import Service from "@/models/Service";
@@ -38,6 +39,11 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: "Service not found" }, { status: 404 });
     }
 
+    // Instant cache revalidation on website
+    revalidatePath("/services");
+    revalidatePath("/bridal-packages");
+    revalidatePath("/");
+
     return NextResponse.json({ success: true, data: service });
   } catch (err) {
     return handleApiError(err, "Failed to update service.");
@@ -66,6 +72,11 @@ export async function DELETE(
     if (!service) {
       return NextResponse.json({ success: false, error: "Service not found" }, { status: 404 });
     }
+
+    // Instant cache revalidation on website
+    revalidatePath("/services");
+    revalidatePath("/bridal-packages");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, data: { id: service._id } });
   } catch (err) {

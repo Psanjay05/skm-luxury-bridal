@@ -7,21 +7,38 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, Clock, AlertCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, Clock, AlertCircle, Sparkles, Tag, Check } from "lucide-react";
 
 type Service = {
   _id?: string;
   title: string;
+  price: string;
+  tagline?: string;
   description: string;
   imageUrl: string;
   category: string;
   ctaText: string;
 };
 
+const CATEGORIES = [
+  { value: "all", label: "All Services" },
+  { value: "bridal_package", label: "Bridal Packages" },
+  { value: "makeup", label: "Makeup & Skin" },
+  { value: "hairstyle", label: "Hair Artistry" },
+  { value: "saree", label: "Saree Draping" },
+  { value: "jewellery", label: "Jewellery Rental" },
+  { value: "mehendi", label: "Mehendi" },
+  { value: "other", label: "Other Services" },
+];
+
+const PRESET_PRICES = ["₹18,000", "₹25,000", "₹35,000", "From ₹9,999", "From ₹12,999", "From ₹7,999", "From ₹2,500", "From ₹1,200", "From ₹999", "Contact Us"];
+
 const EMPTY: Service = {
   title: "",
+  price: "From ₹9,999",
+  tagline: "",
   description: "",
-  imageUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=800&q=80",
+  imageUrl: "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
   category: "makeup",
   ctaText: "Book Now",
 };
@@ -34,6 +51,7 @@ export default function ServicesAdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   const fetchServices = async () => {
     setLoading(true);
@@ -44,11 +62,15 @@ export default function ServicesAdminPage() {
       if (res.ok && json.success) {
         setServices(json.data ?? []);
       } else {
-        setActionError(json.error || "Failed to fetch services.");
+        const errorMsg = json.details
+          ? `${json.error || "Failed to fetch services"} — ${json.details}`
+          : (json.error || `Failed to fetch services (HTTP ${res.status}).`);
+        setActionError(errorMsg);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("[FETCH_SERVICES_ERROR]", err);
-      setActionError("Unable to fetch services. Please refresh.");
+      const msg = err instanceof Error ? err.message : "Unable to reach server.";
+      setActionError(`Unable to fetch services: ${msg}. Please refresh.`);
     } finally {
       setLoading(false);
     }
@@ -59,6 +81,11 @@ export default function ServicesAdminPage() {
   }, []);
 
   const handleSave = async () => {
+    if (!form.title.trim() || !form.price.trim() || !form.description.trim()) {
+      setActionError("Please provide title, price, and description.");
+      return;
+    }
+
     setSaving(true);
     setActionError(null);
 
@@ -80,24 +107,28 @@ export default function ServicesAdminPage() {
         setEditingId(null);
         fetchServices();
       } else {
-        setActionError(json.error || "Failed to save service.");
+        setActionError(json.error || "Failed to save service price.");
       }
     } catch (err) {
       console.error("[SAVE_SERVICE_ERROR]", err);
-      setActionError("Failed to save service. Check internet connection.");
+      setActionError("Failed to save service. Check server connection.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleEdit = (s: Service) => {
-    setForm(s);
+    setForm({
+      ...EMPTY,
+      ...s,
+      price: s.price || "From ₹9,999",
+    });
     setEditingId(s._id ?? null);
     setOpen(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this service?")) return;
+    if (!confirm("Are you sure you want to remove this service from the website?")) return;
     try {
       setActionError(null);
       const res = await fetch(`/api/services/${id}`, {
@@ -115,129 +146,253 @@ export default function ServicesAdminPage() {
     }
   };
 
+  const filteredServices = selectedCategory === "all"
+    ? services
+    : services.filter((s) => s.category === selectedCategory);
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-3xl font-bold text-foreground">Services & Packages</h1>
-          <p className="text-muted-foreground text-sm mt-1">Manage public bridal packages and makeup services</p>
+          <h1 className="font-heading text-3xl font-bold text-foreground">Services & Package Pricing</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Update pricing, descriptions, and packages. Changes sync live on the website immediately.
+          </p>
         </div>
-        <Button onClick={() => { setForm(EMPTY); setEditingId(null); setOpen(true); }} className="bg-primary text-primary-foreground gap-2">
-          <Plus size={16} /> Add New Service
+        <Button
+          onClick={() => { setForm(EMPTY); setEditingId(null); setOpen(true); }}
+          className="bg-primary text-primary-foreground gap-2 font-semibold shadow-md"
+        >
+          <Plus size={16} /> Add New Service / Package
         </Button>
       </div>
 
+      {/* Error Alert */}
       {actionError && (
-        <div className="p-3.5 text-sm rounded-md bg-destructive/10 text-destructive flex items-center gap-2 font-medium">
-          <AlertCircle size={16} />
-          <span>{actionError}</span>
+        <div className="p-3.5 text-sm rounded-md bg-destructive/10 text-destructive flex items-center justify-between gap-3 font-medium">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{actionError}</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={fetchServices}
+            className="text-xs h-7 border-destructive/30 hover:bg-destructive/10 text-destructive"
+          >
+            Try Again
+          </Button>
         </div>
       )}
 
+      {/* Category Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.value}
+            onClick={() => setSelectedCategory(cat.value)}
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border transition-colors ${
+              selectedCategory === cat.value
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "bg-background text-foreground border-border hover:border-primary/50"
+            }`}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Modal Dialog for Add / Edit */}
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setForm(EMPTY); setEditingId(null); } }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Service Package" : "Add New Service Package"}</DialogTitle>
+            <DialogTitle className="font-heading text-2xl font-bold flex items-center gap-2">
+              <Tag size={20} className="text-primary" />
+              {editingId ? "Edit Service Price & Details" : "Add New Service Package"}
+            </DialogTitle>
           </DialogHeader>
+
           <div className="space-y-4 pt-2">
+            {/* Title */}
             <div className="space-y-1">
-              <Label htmlFor="title">Service Title *</Label>
+              <Label htmlFor="title" className="text-xs font-bold uppercase tracking-wider">Service Title *</Label>
               <Input
                 id="title"
                 value={form.title}
                 onChange={e => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g. Royal HD Bridal Makeup"
+                placeholder="e.g. Royal HD Bridal Makeover"
               />
             </div>
+
+            {/* Price with Quick Presets */}
+            <div className="space-y-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+              <Label htmlFor="price" className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                <Sparkles size={14} /> Service Price on Website *
+              </Label>
+              <Input
+                id="price"
+                value={form.price}
+                onChange={e => setForm({ ...form, price: e.target.value })}
+                placeholder="e.g. ₹25,000 or From ₹9,999"
+                className="bg-background font-semibold text-base"
+              />
+              <div className="space-y-1">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold block">Quick Price Presets:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {PRESET_PRICES.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setForm({ ...form, price: p })}
+                      className="text-[11px] bg-background hover:bg-primary/20 border border-border px-2 py-0.5 rounded text-foreground font-medium transition-colors"
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Tagline / Subtitle */}
             <div className="space-y-1">
-              <Label htmlFor="description">Service Description *</Label>
+              <Label htmlFor="tagline" className="text-xs font-bold uppercase tracking-wider">Tagline / Short Subtitle (Optional)</Label>
+              <Input
+                id="tagline"
+                value={form.tagline || ""}
+                onChange={e => setForm({ ...form, tagline: e.target.value })}
+                placeholder="e.g. Our most popular 2-event Muhurtham + Reception package"
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-1">
+              <Label htmlFor="description" className="text-xs font-bold uppercase tracking-wider">Service Description *</Label>
               <Textarea
                 id="description"
                 value={form.description}
                 onChange={e => setForm({ ...form, description: e.target.value })}
                 rows={3}
-                placeholder="Details of what's included..."
+                placeholder="Details of what's included in this service package..."
               />
             </div>
+
+            {/* Image URL / Path */}
             <div className="space-y-1">
-              <Label htmlFor="imageUrl">Cover Image URL *</Label>
+              <Label htmlFor="imageUrl" className="text-xs font-bold uppercase tracking-wider">Cover Image URL or Path *</Label>
               <Input
                 id="imageUrl"
                 value={form.imageUrl}
                 onChange={e => setForm({ ...form, imageUrl: e.target.value })}
-                placeholder="https://..."
+                placeholder="/images/portfolio/bridal-pink-saree-gold-jewellery.jpg"
               />
             </div>
+
+            {/* Category and CTA */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label htmlFor="category">Category *</Label>
+                <Label htmlFor="category" className="text-xs font-bold uppercase tracking-wider">Category *</Label>
                 <select
                   id="category"
                   value={form.category}
                   onChange={e => setForm({ ...form, category: e.target.value })}
                   className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
                 >
-                  {["makeup", "saree", "hairstyle", "jewellery", "mehendi", "other"].map(c => (
-                    <option key={c} value={c} className="capitalize">{c}</option>
-                  ))}
+                  <option value="bridal_package">Bridal Package (Tier)</option>
+                  <option value="makeup">Makeup & Skin</option>
+                  <option value="hairstyle">Hair Artistry</option>
+                  <option value="saree">Saree Draping</option>
+                  <option value="jewellery">Jewellery Rental</option>
+                  <option value="mehendi">Mehendi</option>
+                  <option value="other">Other Service</option>
                 </select>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="ctaText">Button CTA Text</Label>
+                <Label htmlFor="ctaText" className="text-xs font-bold uppercase tracking-wider">Button CTA Text</Label>
                 <Input
                   id="ctaText"
                   value={form.ctaText}
                   onChange={e => setForm({ ...form, ctaText: e.target.value })}
+                  placeholder="Book Now"
                 />
               </div>
             </div>
-            <Button onClick={handleSave} disabled={saving} className="w-full bg-primary text-primary-foreground font-semibold">
-              {saving ? "Saving..." : editingId ? "Update Service" : "Create Service"}
+
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full bg-primary text-primary-foreground font-semibold py-5 text-xs uppercase tracking-widest mt-2"
+            >
+              {saving ? "Saving Changes..." : editingId ? "Update Service & Live Price" : "Publish Service to Website"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Services Table */}
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <Table>
           <TableHeader className="bg-muted/40">
             <TableRow>
-              <TableHead>Title</TableHead>
+              <TableHead>Service / Package</TableHead>
               <TableHead>Category</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead>Live Price on Web</TableHead>
+              <TableHead className="hidden md:table-cell">Description</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                   <div className="flex items-center justify-center gap-2">
-                    <Clock size={16} className="animate-spin text-primary" /> Loading services...
+                    <Clock size={16} className="animate-spin text-primary" /> Loading live services and prices...
                   </div>
                 </TableCell>
               </TableRow>
-            ) : services.length === 0 ? (
+            ) : filteredServices.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
-                  No services found. Click &quot;Add New Service&quot; to create one.
+                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                  No services found in this category. Click &quot;Add New Service / Package&quot; to add one.
                 </TableCell>
               </TableRow>
             ) : (
-              services.map((s) => (
-                <TableRow key={s._id}>
-                  <TableCell className="font-medium text-foreground">{s.title}</TableCell>
-                  <TableCell className="capitalize text-xs font-semibold px-2 py-1 bg-primary/10 text-primary rounded-full inline-block mt-2">
-                    {s.category}
+              filteredServices.map((s) => (
+                <TableRow key={s._id} className="hover:bg-muted/20">
+                  <TableCell className="font-semibold text-foreground">
+                    <div>{s.title}</div>
+                    {s.tagline && <div className="text-xs text-muted-foreground font-normal">{s.tagline}</div>}
                   </TableCell>
-                  <TableCell className="max-w-xs truncate text-muted-foreground text-sm">{s.description}</TableCell>
+                  <TableCell>
+                    <span className="capitalize text-[11px] font-bold px-2.5 py-0.5 bg-primary/10 text-primary rounded-full inline-block">
+                      {s.category.replace("_", " ")}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono font-bold text-foreground bg-secondary/80 px-2.5 py-1 rounded-md text-xs border border-border inline-flex items-center gap-1">
+                      <Tag size={12} className="text-primary" /> {s.price || "From ₹9,999"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell max-w-xs truncate text-muted-foreground text-xs">
+                    {s.description}
+                  </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleEdit(s)}>
-                        <Pencil size={14} />
+                    <div className="flex justify-end gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(s)}
+                        className="h-8 gap-1 text-xs"
+                      >
+                        <Pencil size={13} /> Edit Price
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => handleDelete(s._id!)}>
-                        <Trash2 size={14} />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDelete(s._id!)}
+                      >
+                        <Trash2 size={13} />
                       </Button>
                     </div>
                   </TableCell>

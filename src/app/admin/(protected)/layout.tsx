@@ -1,37 +1,24 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
-import { SignOutButton } from "@/components/shared/SignOutButton";
+import { AdminTopBar } from "@/components/layout/AdminTopBar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session) redirect("/admin/login");
 
   return (
-    <div className="flex h-screen bg-muted/30 overflow-hidden">
+    <div className="min-h-screen md:h-screen md:overflow-hidden bg-muted/30 flex flex-col md:flex-row">
+      {/* Desktop collapsible fixed sidebar (hidden on mobile) */}
       <AdminSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar */}
-        <header className="h-16 bg-card border-b border-border flex items-center px-6 gap-4 shrink-0 justify-between">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            SKM Luxury Bridal Studio Admin
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-primary text-sm font-semibold">M</span>
-              </div>
-              <div className="hidden sm:block text-right">
-                <p className="text-sm font-medium text-foreground">{session.user?.name ?? "Admin"}</p>
-                <p className="text-xs text-muted-foreground">Administrator</p>
-              </div>
-            </div>
-            <SignOutButton />
-          </div>
-        </header>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-6">
+      {/* Main dashboard content area */}
+      <div className="flex-1 flex flex-col min-w-0 md:overflow-hidden">
+        {/* Responsive top bar with mobile hamburger drawer trigger */}
+        <AdminTopBar userName={session.user?.name ?? "Admin"} />
+
+        {/* Page content: unified natural scroll on mobile, contained scroll on desktop */}
+        <main className="flex-1 w-full p-4 sm:p-6 overflow-visible md:overflow-y-auto">
           {children}
         </main>
       </div>

@@ -21,13 +21,25 @@ const ServiceSchema = new mongoose.Schema(
       type: String,
       default: "Book Now",
     },
+    price: {
+      type: String,
+      required: [true, "Service price is required"],
+      default: "Contact for Quote",
+    },
+    tagline: {
+      type: String,
+    },
+    features: {
+      type: [String],
+      default: [],
+    },
     isDeleted: {
       type: Boolean,
       default: false,
     },
     category: {
       type: String,
-      enum: ["makeup", "saree", "hairstyle", "jewellery", "mehendi", "other"],
+      enum: ["makeup", "saree", "hairstyle", "jewellery", "mehendi", "bridal_package", "other"],
       default: "makeup",
     },
   },
