@@ -6,20 +6,31 @@ import { handleApiError } from "@/lib/errors";
 import { faqSchema } from "@/lib/validations/faq";
 import { getLocalFaqs, saveLocalFaq } from "@/lib/local-store";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET all non-deleted FAQs sorted by order (Public)
 export async function GET() {
   try {
+    const localFaqs = getLocalFaqs();
+
     try {
       await connectToDatabase();
-      const faqs = await FAQ.find({ isDeleted: false }).sort({ order: 1, createdAt: -1 }).lean();
-      if (faqs && faqs.length > 0) {
-        return NextResponse.json({ success: true, data: faqs });
+      const dbFaqs = await FAQ.find({ isDeleted: false }).sort({ order: 1, createdAt: -1 }).lean();
+      if (dbFaqs && dbFaqs.length > 0) {
+        return NextResponse.json(
+          { success: true, data: localFaqs.length > 0 ? localFaqs : dbFaqs },
+          { headers: { "Cache-Control": "no-store, max-age=0" } }
+        );
       }
     } catch (dbErr) {
       console.warn("[GET_FAQS] DB offline, loading local FAQs:", dbErr);
     }
-    const localFaqs = getLocalFaqs();
-    return NextResponse.json({ success: true, data: localFaqs });
+
+    return NextResponse.json(
+      { success: true, data: localFaqs },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (err) {
     return handleApiError(err, "Failed to fetch FAQs.");
   }

@@ -9,19 +9,23 @@ import { getLocalGallery, saveLocalGallery } from "@/lib/local-store";
 import { INITIAL_GALLERY_ITEMS } from "@/lib/initial-data";
 export { INITIAL_GALLERY_ITEMS };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET all non-deleted gallery images (Public, filterable by category)
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
 
+    const localGallery = getLocalGallery(category || undefined);
+
     try {
       await connectToDatabase();
-      // Auto-seed if database is active but gallery collection is empty
       const count = await Gallery.countDocuments({ isDeleted: false });
-      if (count === 0) {
+      if (count === 0 && localGallery.length > 0) {
         console.log("[GET_GALLERY] Seeding initial portfolio gallery images...");
-        const seedPayload = INITIAL_GALLERY_ITEMS.map(({ _id, ...item }) => item);
+        const seedPayload = localGallery.map(({ _id, ...item }) => item);
         await Gallery.insertMany(seedPayload);
       }
 
@@ -30,20 +34,25 @@ export async function GET(req: Request) {
         filter.category = category;
       }
 
-      const images = await Gallery.find(filter).sort({ createdAt: -1 }).lean();
-      if (images && images.length > 0) {
-        return NextResponse.json({ success: true, data: images });
+      const dbImages = await Gallery.find(filter).sort({ createdAt: -1 }).lean();
+      if (dbImages && dbImages.length > 0) {
+        return NextResponse.json(
+          { success: true, data: localGallery.length > 0 ? localGallery : dbImages },
+          { headers: { "Cache-Control": "no-store, max-age=0" } }
+        );
       }
     } catch (dbErr: unknown) {
       const dbErrorMessage = dbErr instanceof Error ? dbErr.message : String(dbErr);
       console.warn("[GET_GALLERY] MongoDB connection unavailable, serving local gallery items:", dbErrorMessage);
     }
 
-    const localGallery = getLocalGallery(category || undefined);
-    return NextResponse.json({
-      success: true,
-      data: localGallery,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: localGallery,
+      },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (err) {
     return handleApiError(err, "Failed to fetch gallery images.");
   }

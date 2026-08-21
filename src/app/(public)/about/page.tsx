@@ -44,6 +44,7 @@ export default function AboutPage() {
                   src="/images/maha-shree-profile.jpg"
                   alt="Maha Shree - Professional Bridal Makeup Artist"
                   fill
+                  sizes="(max-width: 768px) 100vw, 450px"
                   className="object-cover object-top"
                   priority
                 />
@@ -142,6 +143,7 @@ export default function AboutPage() {
                   src={work.img}
                   alt={work.title}
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent opacity-80 group-hover:opacity-95 transition-opacity flex flex-col justify-end p-4">

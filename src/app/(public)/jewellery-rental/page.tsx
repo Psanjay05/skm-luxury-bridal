@@ -183,6 +183,7 @@ export default function JewelleryRentalPage() {
                       src={item.image}
                       alt={item.name}
                       fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute top-3 left-3 bg-background/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider text-primary border border-primary/20">
@@ -259,7 +260,13 @@ export default function JewelleryRentalPage() {
                 <p className="text-sm font-semibold text-primary">{selectedSet.priceTag}</p>
 
                 <div className="aspect-video relative rounded-lg overflow-hidden border border-border">
-                  <Image src={selectedSet.image} alt={selectedSet.name} fill className="object-cover object-top" />
+                  <Image 
+                    src={selectedSet.image} 
+                    alt={selectedSet.name} 
+                    fill 
+                    sizes="(max-width: 768px) 100vw, 600px"
+                    className="object-cover object-top" 
+                  />
                 </div>
 
                 <p className="text-sm text-muted-foreground leading-relaxed">{selectedSet.description}</p>

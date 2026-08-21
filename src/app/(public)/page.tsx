@@ -117,6 +117,7 @@ export default function HomePage() {
                     src="/images/portfolio/bridal-close-up-portrait.jpg"
                     alt="Bridal HD Makeover by Maha Shree"
                     fill
+                    sizes="(max-width: 768px) 100vw, 450px"
                     className="object-cover object-top"
                     priority
                   />
@@ -246,6 +247,7 @@ export default function HomePage() {
                     src="/images/maha-shree-profile.jpg"
                     alt="Maha Shree - Lead Bridal Makeup Artist"
                     fill
+                    sizes="(max-width: 768px) 100vw, 400px"
                     className="object-cover object-top"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent z-10" />

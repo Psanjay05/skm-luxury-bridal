@@ -118,6 +118,7 @@ export function BeforeAfterSlider({
             src={afterImage}
             alt={afterAlt}
             fill
+            sizes="(max-width: 768px) 100vw, 550px"
             className="object-cover object-top pointer-events-none"
             priority
           />
@@ -135,6 +136,7 @@ export function BeforeAfterSlider({
             src={beforeImage}
             alt={beforeAlt}
             fill
+            sizes="(max-width: 768px) 100vw, 550px"
             className="object-cover object-top pointer-events-none"
             priority
           />

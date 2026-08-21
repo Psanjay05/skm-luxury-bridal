@@ -96,6 +96,7 @@ export default function ServicesPage() {
             src="/images/portfolio/bridal-pink-saree-gold-jewellery.jpg"
             alt="SKM Luxury Bridal Services"
             fill
+            sizes="100vw"
             className="object-cover object-top"
             priority
           />
@@ -133,7 +134,13 @@ export default function ServicesPage() {
               >
                 <div className={isEven ? "lg:order-1" : "lg:order-2"}>
                   <div className="relative h-80 lg:h-96 rounded-2xl overflow-hidden border border-border/60 shadow-xl">
-                    <Image src={section.image} alt={section.imageAlt} fill className="object-cover object-top" />
+                    <Image
+                      src={section.image}
+                      alt={section.imageAlt}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      className="object-cover object-top"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
                     <div className="absolute bottom-4 left-4 z-10">
                       <div className="inline-flex items-center gap-2 bg-background/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-primary/20 text-xs font-bold text-primary">

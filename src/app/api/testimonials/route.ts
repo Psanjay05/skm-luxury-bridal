@@ -10,11 +10,16 @@ import { INITIAL_TESTIMONIALS } from "@/lib/initial-data";
 import { getLocalTestimonials, saveLocalTestimonial } from "@/lib/local-store";
 export { INITIAL_TESTIMONIALS };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET testimonials (Public GET returns non-deleted, option for all in admin)
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const featuredOnly = searchParams.get("featured") === "true";
+
+    const localTestimonials = getLocalTestimonials(featuredOnly);
 
     try {
       await connectToDatabase();
@@ -22,8 +27,8 @@ export async function GET(req: Request) {
 
       // Auto-seed initial testimonials if collection is empty
       const count = await Testimonial.countDocuments({ isDeleted: false });
-      if (count === 0) {
-        const seedPayload = INITIAL_TESTIMONIALS.map(({ _id: _, ...item }) => item);
+      if (count === 0 && localTestimonials.length > 0) {
+        const seedPayload = localTestimonials.map(({ _id: _, ...item }) => item);
         await Testimonial.insertMany(seedPayload);
       }
 
@@ -32,20 +37,22 @@ export async function GET(req: Request) {
         filter.isFeatured = true;
       }
 
-      const testimonials = await Testimonial.find(filter).sort({ createdAt: -1 }).lean();
-      if (testimonials && testimonials.length > 0) {
-        return NextResponse.json({ success: true, data: testimonials });
+      const dbTestimonials = await Testimonial.find(filter).sort({ createdAt: -1 }).lean();
+      if (dbTestimonials && dbTestimonials.length > 0) {
+        return NextResponse.json(
+          { success: true, data: localTestimonials.length > 0 ? localTestimonials : dbTestimonials },
+          { headers: { "Cache-Control": "no-store, max-age=0" } }
+        );
       }
     } catch (dbErr: unknown) {
       const dbErrorMessage = dbErr instanceof Error ? dbErr.message : String(dbErr);
       console.warn("[GET_TESTIMONIALS] MongoDB unavailable, loading local store:", dbErrorMessage);
     }
 
-    const localTestimonials = getLocalTestimonials(featuredOnly);
-    return NextResponse.json({
-      success: true,
-      data: localTestimonials,
-    });
+    return NextResponse.json(
+      { success: true, data: localTestimonials },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (err) {
     return handleApiError(err, "Failed to fetch testimonials.");
   }

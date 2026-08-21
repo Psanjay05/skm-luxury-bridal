@@ -318,6 +318,7 @@ export default function GalleryPage() {
                     src={selectedItem.imageUrl}
                     alt={selectedItem.altText || selectedItem.title || "Bridal Makeover"}
                     fill
+                    sizes="(max-width: 768px) 100vw, 400px"
                     className="object-cover object-top"
                   />
                 </div>
