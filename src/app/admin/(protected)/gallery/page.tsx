@@ -29,7 +29,7 @@ const PRESET_WORK = [
   { label: "Before & After HD Makeover", path: "/images/portfolio/before-after-hd-makeover.jpg", cat: "Before & After", alt: "HD Bridal Makeover Transformation by Maha Shree" },
   { label: "Traditional South Indian Bride", path: "/images/portfolio/traditional-south-indian-bride.jpg", cat: "Bridal", alt: "Outdoor Traditional South Indian Bride Look" },
   { label: "Pink Silk Saree & Gold Set", path: "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg", cat: "Bridal", alt: "Royal Pink Silk Bridal Makeup & Antique Gold" },
-  { label: "Full Standing Pose Saree Pleating", path: "/images/portfolio/full-bridal-pose-silk-saree.jpg", cat: "Saree Draping", alt: "Pre-Pleated Silk Saree & Temple Belt Pose" },
+  { label: "Full Standing Pose Saree Pleating", path: "/images/portfolio/full-bridal-pose-silk-saree.jpg", cat: "Bridal", alt: "Pre-Pleated Silk Saree & Temple Belt Pose" },
   { label: "HD Bridal Close-Up Portrait", path: "/images/portfolio/bridal-close-up-portrait.jpg", cat: "Jewellery", alt: "Glowing HD Bridal Portrait by Maha Shree" },
 ];
 
@@ -55,11 +55,15 @@ export default function GalleryAdminPage() {
       if (res.ok && json.success) {
         setImages(json.data ?? []);
       } else {
-        setActionError(json.error || "Failed to fetch gallery images.");
+        const errorMsg = json.details
+          ? `${json.error || "Failed to fetch gallery images"} — ${json.details}`
+          : (json.error || `Failed to fetch gallery images (HTTP ${res.status}).`);
+        setActionError(errorMsg);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("[FETCH_GALLERY_ERROR]", err);
-      setActionError("Unable to fetch gallery. Please refresh.");
+      const msg = err instanceof Error ? err.message : "Unable to reach server.";
+      setActionError(`Unable to fetch gallery: ${msg}. Please refresh or try again.`);
     } finally {
       setLoading(false);
     }
@@ -161,9 +165,19 @@ export default function GalleryAdminPage() {
       </div>
 
       {actionError && (
-        <div className="p-3.5 text-sm rounded-md bg-destructive/10 text-destructive flex items-center gap-2 font-medium">
-          <AlertCircle size={16} />
-          <span>{actionError}</span>
+        <div className="p-3.5 text-sm rounded-md bg-destructive/10 text-destructive flex items-center justify-between gap-3 font-medium">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{actionError}</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={fetchImages}
+            className="text-xs h-7 border-destructive/30 hover:bg-destructive/10 text-destructive"
+          >
+            Try Again
+          </Button>
         </div>
       )}
 

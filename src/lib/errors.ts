@@ -1,21 +1,30 @@
 import { NextResponse } from "next/server";
 
 export function handleApiError(error: unknown, userMessage = "An unexpected error occurred.") {
+  const errorMessage = error instanceof Error ? error.message : String(error);
   // Log detailed error on server for diagnostics
-  console.error("[API_ERROR]", error);
+  console.error("[API_ERROR]", {
+    userMessage,
+    error: errorMessage,
+    stack: error instanceof Error ? error.stack : undefined,
+  });
 
   if (error instanceof Error) {
     if (error.name === "BSONError" || error.name === "CastError") {
       return NextResponse.json(
-        { error: "Invalid resource identifier format." },
+        { success: false, error: "Invalid resource identifier format.", details: errorMessage },
         { status: 400 }
       );
     }
   }
 
-  // Return clean, user-safe error message without leaking stack traces or internal paths
+  // Return formatted error message with server diagnostics surfaced clearly
   return NextResponse.json(
-    { error: userMessage },
+    {
+      success: false,
+      error: userMessage,
+      details: errorMessage,
+    },
     { status: 500 }
   );
 }
