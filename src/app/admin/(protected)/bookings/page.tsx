@@ -51,7 +51,10 @@ export default function BookingsPage() {
     setLoading(true);
     setActionError(null);
     try {
-      const res = await fetch(`/api/bookings?status=${statusFilter}`);
+      const res = await fetch(`/api/bookings?status=${statusFilter}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache, no-store" },
+      });
       if (!res.ok) throw new Error("Failed to load bookings");
       const json = await res.json();
       setBookings(json.data?.bookings ?? json.bookings ?? []);

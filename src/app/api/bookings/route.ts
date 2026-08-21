@@ -7,6 +7,9 @@ import { bookingSchema } from "@/lib/validations/booking";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getLocalBookings, saveLocalBooking } from "@/lib/local-store";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 function generateBookingReference(): string {
   const year = new Date().getFullYear();
   const randomDigits = Math.floor(10000 + Math.random() * 90000);
@@ -26,30 +29,40 @@ export async function GET(req: Request) {
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
 
+    // Load latest local bookings
+    let localBookings = getLocalBookings();
+    if (status && status !== "all") {
+      localBookings = localBookings.filter((b) => b.status === status);
+    }
+
     try {
       await connectToDatabase();
 
       const filter: Record<string, unknown> = { isDeleted: false };
       if (status && status !== "all") filter.status = status;
 
-      const [bookings, total] = await Promise.all([
+      const [dbBookings, total] = await Promise.all([
         Booking.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
         Booking.countDocuments(filter),
       ]);
 
-      return NextResponse.json({
-        success: true,
-        data: { bookings, total, page, pages: Math.ceil(total / limit) },
-      });
+      if (dbBookings && dbBookings.length > 0) {
+        return NextResponse.json(
+          {
+            success: true,
+            data: { bookings: localBookings.length > 0 ? localBookings : dbBookings, total: Math.max(total, localBookings.length), page, pages: Math.ceil(Math.max(total, localBookings.length) / limit) || 1 },
+          },
+          { headers: { "Cache-Control": "no-store, max-age=0" } }
+        );
+      }
     } catch (dbErr) {
       console.warn("[GET_BOOKINGS] DB offline, using local store:", dbErr);
-      let localBookings = getLocalBookings();
-      if (status && status !== "all") {
-        localBookings = localBookings.filter((b) => b.status === status);
-      }
-      const total = localBookings.length;
-      const paginated = localBookings.slice((page - 1) * limit, page * limit);
-      return NextResponse.json({
+    }
+
+    const total = localBookings.length;
+    const paginated = localBookings.slice((page - 1) * limit, page * limit);
+    return NextResponse.json(
+      {
         success: true,
         data: {
           bookings: paginated,
@@ -57,8 +70,9 @@ export async function GET(req: Request) {
           page,
           pages: Math.ceil(total / limit) || 1,
         },
-      });
-    }
+      },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (err) {
     return handleApiError(err, "Failed to fetch bookings.");
   }
@@ -67,7 +81,7 @@ export async function GET(req: Request) {
 // POST create booking (Public with Rate Limiting & Honeypot)
 export async function POST(req: Request) {
   const rateLimitResponse = checkRateLimit(req, {
-    limit: 10,
+    limit: 20,
     windowMs: 15 * 60 * 1000,
     prefix: "bookings_post",
   });
@@ -95,53 +109,48 @@ export async function POST(req: Request) {
     const bookingReference = generateBookingReference();
     const { website_hp: _, ...bookingData } = parsed.data;
 
+    // 1. Always save to local store so bookings ALWAYS appear in admin
+    const record = saveLocalBooking({
+      customerName: bookingData.customerName,
+      email: bookingData.email || "",
+      phone: bookingData.phone,
+      service: bookingData.service,
+      preferredDate: bookingData.preferredDate,
+      preferredTime: bookingData.preferredTime || "Morning",
+      location: bookingData.location,
+      message: bookingData.message || "",
+      bookingReference,
+      status: "pending",
+    });
+
+    // 2. Also save to MongoDB if active
     try {
       await connectToDatabase();
-
-      const booking = await Booking.create({
+      await Booking.create({
         ...bookingData,
         bookingReference,
         preferredDate: new Date(bookingData.preferredDate),
       });
-
-      return NextResponse.json(
-        {
-          success: true,
-          data: {
-            id: booking._id,
-            bookingReference: booking.bookingReference,
-          },
-        },
-        { status: 201 }
-      );
     } catch (dbErr) {
-      console.warn("[POST_BOOKING] DB offline, saving to local store fallback:", dbErr);
-      const record = saveLocalBooking({
-        customerName: bookingData.customerName,
-        email: bookingData.email || "",
-        phone: bookingData.phone,
-        service: bookingData.service,
-        preferredDate: bookingData.preferredDate,
-        preferredTime: bookingData.preferredTime || "Morning",
-        location: bookingData.location,
-        message: bookingData.message || "",
-        bookingReference,
-        status: "pending",
-      });
-
-      return NextResponse.json(
-        {
-          success: true,
-          data: {
-            id: record._id,
-            bookingReference: record.bookingReference,
-          },
-        },
-        { status: 201 }
-      );
+      console.warn("[POST_BOOKING] DB offline, persisted in local store:", dbErr);
     }
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          id: record._id,
+          bookingReference: record.bookingReference,
+        },
+      },
+      {
+        status: 201,
+        headers: { "Cache-Control": "no-store, max-age=0" },
+      }
+    );
   } catch (err) {
     return handleApiError(err, "Failed to submit booking request. Please try again.");
   }
 }
+
 

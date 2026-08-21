@@ -26,7 +26,10 @@ export default function MessagesAdminPage() {
     setLoading(true);
     setActionError(null);
     try {
-      const res = await fetch("/api/contact");
+      const res = await fetch("/api/contact", {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache, no-store" },
+      });
       const json = await res.json();
       if (res.ok && json.success) {
         setMessages(json.data ?? []);

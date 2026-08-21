@@ -73,7 +73,10 @@ export default function BridalPackagesPage() {
   useEffect(() => {
     async function fetchLivePackages() {
       try {
-        const res = await fetch("/api/services");
+        const res = await fetch("/api/services", {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache, no-store" },
+        });
         const json = await res.json();
         if (res.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
           const dbServices: Array<{ title: string; price: string; tagline?: string }> = json.data;

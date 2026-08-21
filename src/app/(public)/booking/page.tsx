@@ -45,6 +45,7 @@ function BookingFormContent() {
   const searchParams = useSearchParams();
   const serviceParam = searchParams.get("service") || "";
 
+  const [serviceOptions, setServiceOptions] = useState(SERVICE_OPTIONS);
   const [successRef, setSuccessRef] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [availabilityData, setAvailabilityData] = useState<{
@@ -82,6 +83,32 @@ function BookingFormContent() {
   const currentLocation = watch("location");
 
   useEffect(() => {
+    async function loadLiveServices() {
+      try {
+        const res = await fetch("/api/services", {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache, no-store" },
+        });
+        const json = await res.json();
+        if (res.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const dbServices: Array<{ title: string; price: string }> = json.data;
+          setServiceOptions((prev) =>
+            prev.map((opt) => {
+              const match = dbServices.find(
+                (s) => s.title.toLowerCase().trim() === opt.name.toLowerCase().trim()
+              );
+              return match ? { ...opt, price: match.price } : opt;
+            })
+          );
+        }
+      } catch (err) {
+        console.warn("[BOOKING_PAGE] Failed to load live services:", err);
+      }
+    }
+    loadLiveServices();
+  }, []);
+
+  useEffect(() => {
     if (serviceParam) {
       setValue("service", serviceParam);
     }
@@ -95,7 +122,10 @@ function BookingFormContent() {
     async function checkDateAvailability() {
       setCheckingAvailability(true);
       try {
-        const res = await fetch(`/api/bookings/availability?date=${encodeURIComponent(currentDate)}`);
+        const res = await fetch(`/api/bookings/availability?date=${encodeURIComponent(currentDate)}`, {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache, no-store" },
+        });
         const json = await res.json();
         if (res.ok && json.success && json.data) {
           setAvailabilityData(json.data);
@@ -299,7 +329,7 @@ function BookingFormContent() {
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {SERVICE_OPTIONS.map((opt) => {
+                  {serviceOptions.map((opt) => {
                     const isSelected = currentService === opt.name;
                     return (
                       <button

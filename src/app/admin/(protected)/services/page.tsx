@@ -58,7 +58,10 @@ export default function ServicesAdminPage() {
     setLoading(true);
     setActionError(null);
     try {
-      const res = await fetch("/api/services");
+      const res = await fetch("/api/services", {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache, no-store" },
+      });
       const json = await res.json();
       if (res.ok && json.success) {
         setServices(json.data ?? []);

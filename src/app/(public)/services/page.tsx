@@ -60,7 +60,10 @@ export default function ServicesPage() {
   useEffect(() => {
     async function fetchLiveServices() {
       try {
-        const res = await fetch("/api/services");
+        const res = await fetch("/api/services", {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache, no-store" },
+        });
         const json = await res.json();
         if (res.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
           const dbServices: Array<{ title: string; description: string; price: string; category: string }> = json.data;
