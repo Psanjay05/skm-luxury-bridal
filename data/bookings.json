@@ -8,12 +8,28 @@
     "preferredTime": "Morning (Muhurtham)",
     "location": "Salem Grand Palace",
     "message": "Automated test booking for end-to-end verification.",
+    "bookingReference": "SKM-2026-59764",
+    "status": "pending",
+    "_id": "6a880b028afb4e7add1d3e03",
+    "isDeleted": false,
+    "createdAt": "2026-08-21T08:23:30.990Z",
+    "updatedAt": "2026-08-21T08:23:30.990Z"
+  },
+  {
+    "customerName": "Priya Sharma (QA)",
+    "email": "priya.qa@example.com",
+    "phone": "9876543210",
+    "service": "Royal HD Makeover Package",
+    "preferredDate": "2026-10-15",
+    "preferredTime": "Morning (Muhurtham)",
+    "location": "Salem Grand Palace",
+    "message": "Automated test booking for end-to-end verification.",
     "bookingReference": "SKM-2026-90252",
     "status": "pending",
     "_id": "6a880650d96b72028781a816",
-    "isDeleted": false,
+    "isDeleted": true,
     "createdAt": "2026-08-21T08:03:28.355Z",
-    "updatedAt": "2026-08-21T08:03:28.355Z"
+    "updatedAt": "2026-08-21T08:14:39.154Z"
   },
   {
     "customerName": "Priya Sharma (QA)",
@@ -27,9 +43,9 @@
     "bookingReference": "SKM-2026-52418",
     "status": "pending",
     "_id": "6a88045456e4ac5cade7c812",
-    "isDeleted": false,
+    "isDeleted": true,
     "createdAt": "2026-08-21T07:55:00.448Z",
-    "updatedAt": "2026-08-21T07:55:00.448Z"
+    "updatedAt": "2026-08-21T08:14:44.552Z"
   },
   {
     "customerName": "Priya Sharma (QA)",
@@ -43,9 +59,9 @@
     "bookingReference": "SKM-2026-16957",
     "status": "pending",
     "_id": "6a880444efe3583b77dd5fca",
-    "isDeleted": false,
+    "isDeleted": true,
     "createdAt": "2026-08-21T07:54:44.791Z",
-    "updatedAt": "2026-08-21T07:54:44.791Z"
+    "updatedAt": "2026-08-21T08:14:48.339Z"
   },
   {
     "customerName": "Priya Sharma (QA)",
@@ -59,9 +75,9 @@
     "bookingReference": "SKM-2026-32109",
     "status": "pending",
     "_id": "6a880422328791454803b2e9",
-    "isDeleted": false,
+    "isDeleted": true,
     "createdAt": "2026-08-21T07:54:10.511Z",
-    "updatedAt": "2026-08-21T07:54:10.511Z"
+    "updatedAt": "2026-08-21T08:14:52.062Z"
   },
   {
     "_id": "65d000000000000000000001",

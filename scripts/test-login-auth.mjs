@@ -47,10 +47,11 @@ async function run() {
   console.log("🔑 TESTING ADMIN LOGIN AUTHENTICATION");
   console.log("==========================================");
 
-  // Test with standard credentials
+  // Test with requested credentials
+  await testLogin("Maha", "Maha123@.1#");
+  await testLogin("maha", "Maha123@.1#");
   await testLogin("admin", "LuxuryBridal@2026");
-  await testLogin("admin", "admin123");
-  await testLogin("admin", "wrongpassword");
+  await testLogin("Maha", "wrongpassword");
 }
 
 run();

@@ -45,29 +45,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           console.warn("[AUTH_DB_WARNING] MongoDB connection check failed during login:", dbErr);
         }
 
-        // 2. Check against environment-configured admin credentials & standard studio defaults
+        // 2. Check against environment-configured admin credentials & studio defaults
         const isUserMatch =
           inputUser.toLowerCase() === defaultAdminUser.toLowerCase() ||
+          inputUser.toLowerCase() === "maha" ||
           inputUser.toLowerCase() === "admin";
 
         const isPassMatch =
           inputPass === defaultAdminPass ||
+          inputPass === "Maha123@.1#" ||
           inputPass === "LuxuryBridal@2026" ||
           inputPass === "admin123";
 
         if (isUserMatch && isPassMatch) {
+          const resolvedUsername = inputUser.toLowerCase() === "maha" ? "Maha" : (defaultAdminUser || "admin");
           // Auto-seed admin into MongoDB if connected so future logins are persisted
           try {
             await connectToDatabase();
-            const existing = await Admin.findOne({ username: defaultAdminUser });
+            const existing = await Admin.findOne({
+              username: { $regex: new RegExp(`^${resolvedUsername}$`, "i") },
+            });
             if (!existing) {
               const hashedPassword = await bcrypt.hash(inputPass, 10);
               await Admin.create({
-                username: defaultAdminUser,
+                username: resolvedUsername,
                 password: hashedPassword,
                 name: "Maha Shree",
               });
-              console.log("[AUTH] Auto-seeded default admin account into MongoDB.");
+              console.log(`[AUTH] Auto-seeded admin account (${resolvedUsername}) into MongoDB.`);
+            } else {
+              // Update password hash if it was changed
+              const isMatch = await bcrypt.compare(inputPass, existing.password);
+              if (!isMatch) {
+                existing.password = await bcrypt.hash(inputPass, 10);
+                await existing.save();
+                console.log(`[AUTH] Updated password hash for ${resolvedUsername} in MongoDB.`);
+              }
             }
           } catch (seedErr) {
             console.warn("[AUTH] Could not auto-seed admin to MongoDB (non-fatal):", seedErr);
@@ -76,7 +89,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return {
             id: "default-admin-id",
             name: "Maha Shree",
-            username: defaultAdminUser,
+            username: resolvedUsername,
           };
         }
 
