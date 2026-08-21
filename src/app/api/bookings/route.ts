@@ -5,6 +5,7 @@ import Booking from "@/models/Booking";
 import { handleApiError } from "@/lib/errors";
 import { bookingSchema } from "@/lib/validations/booking";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getLocalBookings, saveLocalBooking } from "@/lib/local-store";
 
 function generateBookingReference(): string {
   const year = new Date().getFullYear();
@@ -20,33 +21,44 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    try {
-      await connectToDatabase();
-    } catch (dbErr) {
-      console.warn("[GET_BOOKINGS] DB connection offline, returning fallback list:", dbErr);
-      return NextResponse.json({
-        success: true,
-        data: { bookings: [], total: 0, page: 1, pages: 0 },
-      });
-    }
-
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
 
-    const filter: Record<string, unknown> = { isDeleted: false };
-    if (status && status !== "all") filter.status = status;
+    try {
+      await connectToDatabase();
 
-    const [bookings, total] = await Promise.all([
-      Booking.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
-      Booking.countDocuments(filter),
-    ]);
+      const filter: Record<string, unknown> = { isDeleted: false };
+      if (status && status !== "all") filter.status = status;
 
-    return NextResponse.json({
-      success: true,
-      data: { bookings, total, page, pages: Math.ceil(total / limit) },
-    });
+      const [bookings, total] = await Promise.all([
+        Booking.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+        Booking.countDocuments(filter),
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        data: { bookings, total, page, pages: Math.ceil(total / limit) },
+      });
+    } catch (dbErr) {
+      console.warn("[GET_BOOKINGS] DB offline, using local store:", dbErr);
+      let localBookings = getLocalBookings();
+      if (status && status !== "all") {
+        localBookings = localBookings.filter((b) => b.status === status);
+      }
+      const total = localBookings.length;
+      const paginated = localBookings.slice((page - 1) * limit, page * limit);
+      return NextResponse.json({
+        success: true,
+        data: {
+          bookings: paginated,
+          total,
+          page,
+          pages: Math.ceil(total / limit) || 1,
+        },
+      });
+    }
   } catch (err) {
     return handleApiError(err, "Failed to fetch bookings.");
   }
@@ -55,7 +67,7 @@ export async function GET(req: Request) {
 // POST create booking (Public with Rate Limiting & Honeypot)
 export async function POST(req: Request) {
   const rateLimitResponse = checkRateLimit(req, {
-    limit: 5,
+    limit: 10,
     windowMs: 15 * 60 * 1000,
     prefix: "bookings_post",
   });
@@ -81,10 +93,10 @@ export async function POST(req: Request) {
     }
 
     const bookingReference = generateBookingReference();
+    const { website_hp: _, ...bookingData } = parsed.data;
 
     try {
       await connectToDatabase();
-      const { website_hp, ...bookingData } = parsed.data;
 
       const booking = await Booking.create({
         ...bookingData,
@@ -103,13 +115,26 @@ export async function POST(req: Request) {
         { status: 201 }
       );
     } catch (dbErr) {
-      console.warn("[POST_BOOKING] DB offline, returning fallback reference:", dbErr);
+      console.warn("[POST_BOOKING] DB offline, saving to local store fallback:", dbErr);
+      const record = saveLocalBooking({
+        customerName: bookingData.customerName,
+        email: bookingData.email || "",
+        phone: bookingData.phone,
+        service: bookingData.service,
+        preferredDate: bookingData.preferredDate,
+        preferredTime: bookingData.preferredTime || "Morning",
+        location: bookingData.location,
+        message: bookingData.message || "",
+        bookingReference,
+        status: "pending",
+      });
+
       return NextResponse.json(
         {
           success: true,
           data: {
-            id: `temp_${Date.now()}`,
-            bookingReference,
+            id: record._id,
+            bookingReference: record.bookingReference,
           },
         },
         { status: 201 }
@@ -119,3 +144,4 @@ export async function POST(req: Request) {
     return handleApiError(err, "Failed to submit booking request. Please try again.");
   }
 }
+

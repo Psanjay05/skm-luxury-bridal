@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MessageSquare, Trash2, CheckCircle2, Clock, Search, ChevronDown, Send } from "lucide-react";
+import { MessageSquare, Trash2, CheckCircle2, Clock, Search, ChevronDown } from "lucide-react";
 import { formatUpiWhatsAppMessage } from "@/lib/upi";
 
 type Booking = {
@@ -47,7 +47,7 @@ export default function BookingsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
     setActionError(null);
     try {
@@ -61,11 +61,11 @@ export default function BookingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchBookings();
-  }, [statusFilter]);
+  }, [fetchBookings]);
 
   const filteredBookings = bookings.filter((b) => {
     if (!searchQuery.trim()) return true;

@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
-  Sparkles,
   Lock,
 } from "lucide-react";
 
@@ -25,11 +24,11 @@ interface ProfileFormData {
 }
 
 export default function AdminSettingsPage() {
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register, handleSubmit, setValue, reset, watch } = useForm<ProfileFormData>({
+  const { register, handleSubmit, setValue } = useForm<ProfileFormData>({
     defaultValues: {
       name: "Maha Shree",
       username: "admin",
@@ -38,9 +37,6 @@ export default function AdminSettingsPage() {
       confirmPassword: "",
     },
   });
-
-  const newPassword = watch("newPassword");
-  const confirmPassword = watch("confirmPassword");
 
   useEffect(() => {
     async function loadProfile() {

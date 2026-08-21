@@ -14,7 +14,7 @@ const playfair = Playfair_Display({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://skmluxurybridal.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://skm-luxury-bridal.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

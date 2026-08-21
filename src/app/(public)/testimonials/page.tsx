@@ -44,7 +44,7 @@ const FALLBACK_TESTIMONIALS: TestimonialItem[] = [
 
 export default function TestimonialsPage() {
   const [testimonials, setTestimonials] = useState<TestimonialItem[]>(FALLBACK_TESTIMONIALS);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);

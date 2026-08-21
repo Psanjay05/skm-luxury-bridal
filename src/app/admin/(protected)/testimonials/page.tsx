@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, Star, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Star, Clock, AlertCircle } from "lucide-react";
 
 type Testimonial = {
   _id?: string;

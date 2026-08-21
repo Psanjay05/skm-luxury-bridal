@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,7 +55,7 @@ export default function GalleryAdminPage() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
     setLoading(true);
     setActionError(null);
     try {
@@ -76,11 +77,11 @@ export default function GalleryAdminPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
 
   useEffect(() => {
     fetchImages();
-  }, [filter]);
+  }, [fetchImages]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -291,7 +292,7 @@ export default function GalleryAdminPage() {
 
             {form.imageUrl && (
               <div className="aspect-video relative rounded-lg overflow-hidden border border-primary/20 bg-muted shadow-sm">
-                <img src={form.imageUrl} alt="preview" className="object-cover w-full h-full" />
+                <Image src={form.imageUrl} alt="preview" fill unoptimized className="object-cover" />
               </div>
             )}
 
@@ -337,8 +338,8 @@ export default function GalleryAdminPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {images.map((img) => (
             <div key={img._id} className="group relative aspect-square rounded-lg overflow-hidden border border-border bg-muted shadow-sm">
-              <img src={img.imageUrl} alt={img.altText} className="object-cover w-full h-full" />
-              <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-3">
+              <Image src={img.imageUrl} alt={img.altText} fill unoptimized className="object-cover" />
+              <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-3 z-10">
                 <span className="text-white text-xs font-medium text-center line-clamp-2">{img.altText}</span>
                 <span className="text-primary-foreground/80 text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded bg-primary/40">{img.category}</span>
                 <Button

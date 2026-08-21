@@ -7,11 +7,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Scissors, Heart, ArrowRight, PhoneCall } from "lucide-react";
 
-type ServiceItem = {
-  title: string;
-  desc: string;
-  price: string;
-};
 
 const DEFAULT_SERVICES = [
   {

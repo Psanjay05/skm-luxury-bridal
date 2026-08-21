@@ -5,6 +5,7 @@ import ContactMessage from "@/models/ContactMessage";
 import { handleApiError } from "@/lib/errors";
 import { contactSchema } from "@/lib/validations/contact";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getLocalMessages, saveLocalMessage } from "@/lib/local-store";
 
 // GET list contact messages (Admin only)
 export async function GET(req: Request) {
@@ -14,22 +15,25 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    try {
-      await connectToDatabase();
-    } catch (dbErr) {
-      console.warn("[GET_CONTACT] DB offline, returning empty fallback list:", dbErr);
-      return NextResponse.json({ success: true, data: [] });
-    }
-
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
 
-    const filter: Record<string, unknown> = { isDeleted: false };
-    if (status && status !== "all") filter.status = status;
+    try {
+      await connectToDatabase();
 
-    const messages = await ContactMessage.find(filter).sort({ createdAt: -1 }).lean();
+      const filter: Record<string, unknown> = { isDeleted: false };
+      if (status && status !== "all") filter.status = status;
 
-    return NextResponse.json({ success: true, data: messages });
+      const messages = await ContactMessage.find(filter).sort({ createdAt: -1 }).lean();
+      return NextResponse.json({ success: true, data: messages });
+    } catch (dbErr) {
+      console.warn("[GET_CONTACT] DB offline, using local store fallback:", dbErr);
+      let localMessages = getLocalMessages();
+      if (status && status !== "all") {
+        localMessages = localMessages.filter((m) => m.status === status);
+      }
+      return NextResponse.json({ success: true, data: localMessages });
+    }
   } catch (err) {
     return handleApiError(err, "Failed to fetch contact messages.");
   }
@@ -38,7 +42,7 @@ export async function GET(req: Request) {
 // POST create contact message (Public with Rate Limiting & Honeypot)
 export async function POST(req: Request) {
   const rateLimitResponse = checkRateLimit(req, {
-    limit: 5,
+    limit: 10,
     windowMs: 15 * 60 * 1000,
     prefix: "contact_post",
   });
@@ -59,16 +63,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, data: null }, { status: 200 });
     }
 
+    const { website_hp: _, ...messageData } = parsed.data;
+
     try {
       await connectToDatabase();
-      const { website_hp, ...messageData } = parsed.data;
       const message = await ContactMessage.create(messageData);
       return NextResponse.json({ success: true, data: { id: message._id } }, { status: 201 });
     } catch (dbErr) {
-      console.warn("[POST_CONTACT] DB offline, returning fallback success:", dbErr);
-      return NextResponse.json({ success: true, data: { id: `temp_${Date.now()}` } }, { status: 201 });
+      console.warn("[POST_CONTACT] DB offline, saving to local store fallback:", dbErr);
+      const record = saveLocalMessage({
+        name: messageData.name,
+        email: messageData.email || "",
+        phone: messageData.phone,
+        message: messageData.message,
+        status: "unread",
+      });
+      return NextResponse.json({ success: true, data: { id: record._id } }, { status: 201 });
     }
   } catch (err) {
     return handleApiError(err, "Failed to submit contact message. Please try again.");
   }
 }
+
