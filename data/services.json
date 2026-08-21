@@ -2,12 +2,13 @@
   {
     "_id": "65a000000000000000000001",
     "title": "Classic Bridal Package",
-    "price": "₹18,000",
+    "price": "₹18",
     "tagline": "Essential HD makeover for budget-conscious brides",
     "description": "High Definition (HD) Foundation Base, Traditional Hair Styling & Flower Draping, Saree Box Pleating, Eyelash Extension, Studio Consultation.",
     "imageUrl": "/images/portfolio/traditional-south-indian-bride.jpg",
     "category": "bridal_package",
-    "ctaText": "Book Classic Package"
+    "ctaText": "Book Classic Package",
+    "updatedAt": "2026-08-21T06:22:04.323Z"
   },
   {
     "_id": "65a000000000000000000002",
@@ -131,10 +132,12 @@
   {
     "_id": "65a000000000000000000015",
     "title": "Outstation Travel Team",
-    "price": "Contact Us",
+    "price": "just ₹20",
     "description": "Senior styling team available across Salem, Tamil Nadu, Bangalore and South India.",
     "imageUrl": "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
     "category": "other",
-    "ctaText": "Inquire Travel Team"
+    "ctaText": "Inquire Travel Team",
+    "tagline": "",
+    "updatedAt": "2026-08-21T06:49:28.168Z"
   }
 ]

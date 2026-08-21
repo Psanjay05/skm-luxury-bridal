@@ -19,17 +19,15 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
 
-    // Always fetch latest persisted local services first
-    const localServices = getLocalServices(category || undefined);
-
     try {
       await connectToDatabase();
 
       // Auto-seed initial services if collection is empty
       const count = await Service.countDocuments({ isDeleted: false });
-      if (count === 0 && localServices.length > 0) {
-        console.log("[GET_SERVICES] Seeding MongoDB with services...");
-        const seedPayload = localServices.map(({ _id, ...item }) => item);
+      if (count === 0) {
+        console.log("[GET_SERVICES] Seeding MongoDB with initial services...");
+        const localForSeed = getLocalServices(category || undefined);
+        const seedPayload = localForSeed.map(({ _id, ...item }) => item);
         await Service.insertMany(seedPayload);
       }
 
@@ -38,19 +36,21 @@ export async function GET(req: Request) {
         filter.category = category;
       }
 
+      // BUG FIX: DB is the single source of truth when reachable.
+      // Admin price edits go to MongoDB. This ensures those edits are reflected
+      // everywhere (production and local) without stale local JSON shadowing them.
       const dbServices = await Service.find(filter).sort({ createdAt: -1 }).lean();
-      // If DB has services, sync prices from localServices if newer
-      if (dbServices && dbServices.length > 0) {
-        return NextResponse.json(
-          { success: true, data: localServices.length > 0 ? localServices : dbServices },
-          { headers: { "Cache-Control": "no-store, max-age=0" } }
-        );
-      }
+      return NextResponse.json(
+        { success: true, data: dbServices },
+        { headers: { "Cache-Control": "no-store, max-age=0" } }
+      );
     } catch (dbErr: unknown) {
       const dbErrorMessage = dbErr instanceof Error ? dbErr.message : String(dbErr);
       console.warn("[GET_SERVICES] MongoDB unavailable, using local store:", dbErrorMessage);
     }
 
+    // DB offline — fall back to local JSON
+    const localServices = getLocalServices(category || undefined);
     return NextResponse.json(
       { success: true, data: localServices },
       { headers: { "Cache-Control": "no-store, max-age=0" } }

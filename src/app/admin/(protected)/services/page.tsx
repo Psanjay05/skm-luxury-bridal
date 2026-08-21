@@ -85,7 +85,9 @@ export default function ServicesAdminPage() {
   }, []);
 
   const handleSave = async () => {
-    if (!form.title.trim() || !form.price.trim() || !form.description.trim()) {
+    // Trim price but preserve exact characters — "just ₹20" must stay "just ₹20"
+    const trimmedPrice = form.price.trim();
+    if (!form.title.trim() || !trimmedPrice || !form.description.trim()) {
       setActionError("Please provide title, price, and description.");
       return;
     }
@@ -98,11 +100,20 @@ export default function ServicesAdminPage() {
       const url = editingId ? `/api/services/${editingId}` : "/api/services";
       const method = editingId ? "PATCH" : "POST";
 
+      // BUG 2 FIX: Explicitly cast price to String before sending to API.
+      // This prevents any accidental numeric coercion if the browser serialises
+      // a value like "20" (digits-only) as a JSON number rather than a string.
+      const payload = {
+        ...form,
+        price: String(trimmedPrice),
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
+
 
       const json = await res.json();
 

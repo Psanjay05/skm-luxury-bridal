@@ -22,28 +22,29 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
 
-    let localMessages = getLocalMessages();
-    if (status && status !== "all") {
-      localMessages = localMessages.filter((m) => m.status === status);
-    }
-
     try {
       await connectToDatabase();
 
       const filter: Record<string, unknown> = { isDeleted: false };
       if (status && status !== "all") filter.status = status;
 
+      // BUG FIX: DB is the single source of truth when reachable.
+      // This ensures production messages (submitted on vercel.app) are
+      // visible in admin regardless of which environment admin is opened on.
       const dbMessages = await ContactMessage.find(filter).sort({ createdAt: -1 }).lean();
-      if (dbMessages && dbMessages.length > 0) {
-        return NextResponse.json(
-          { success: true, data: localMessages.length > 0 ? localMessages : dbMessages },
-          { headers: { "Cache-Control": "no-store, max-age=0" } }
-        );
-      }
+      return NextResponse.json(
+        { success: true, data: dbMessages },
+        { headers: { "Cache-Control": "no-store, max-age=0" } }
+      );
     } catch (dbErr) {
       console.warn("[GET_CONTACT] DB offline, using local store fallback:", dbErr);
     }
 
+    // DB offline — fall back to local JSON store
+    let localMessages = getLocalMessages();
+    if (status && status !== "all") {
+      localMessages = localMessages.filter((m) => m.status === status);
+    }
     return NextResponse.json(
       { success: true, data: localMessages },
       { headers: { "Cache-Control": "no-store, max-age=0" } }

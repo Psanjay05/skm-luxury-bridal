@@ -30,36 +30,37 @@ export async function GET(req: Request) {
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
 
-    // Load latest local bookings
-    let localBookings = getLocalBookings();
-    if (status && status !== "all") {
-      localBookings = localBookings.filter((b) => b.status === status);
-    }
-
     try {
       await connectToDatabase();
 
       const filter: Record<string, unknown> = { isDeleted: false };
       if (status && status !== "all") filter.status = status;
 
+      // BUG FIX: When MongoDB is reachable, it is the single source of truth.
+      // Production bookings written to Atlas will be visible here regardless of env.
+      // Local JSON is ONLY a fallback for when the DB is offline.
       const [dbBookings, total] = await Promise.all([
         Booking.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
         Booking.countDocuments(filter),
       ]);
 
-      if (dbBookings && dbBookings.length > 0) {
-        return NextResponse.json(
-          {
-            success: true,
-            data: { bookings: localBookings.length > 0 ? localBookings : dbBookings, total: Math.max(total, localBookings.length), page, pages: Math.ceil(Math.max(total, localBookings.length) / limit) || 1 },
-          },
-          { headers: { "Cache-Control": "no-store, max-age=0" } }
-        );
-      }
+      // If DB responded (even with 0 records), use DB data exclusively
+      return NextResponse.json(
+        {
+          success: true,
+          data: { bookings: dbBookings, total, page, pages: Math.ceil(total / limit) || 1 },
+        },
+        { headers: { "Cache-Control": "no-store, max-age=0" } }
+      );
     } catch (dbErr) {
-      console.warn("[GET_BOOKINGS] DB offline, using local store:", dbErr);
+      console.warn("[GET_BOOKINGS] DB offline, using local store fallback:", dbErr);
     }
 
+    // DB is offline — fall back to local JSON store
+    let localBookings = getLocalBookings();
+    if (status && status !== "all") {
+      localBookings = localBookings.filter((b) => b.status === status);
+    }
     const total = localBookings.length;
     const paginated = localBookings.slice((page - 1) * limit, page * limit);
     return NextResponse.json(

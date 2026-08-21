@@ -10,10 +10,14 @@ export const serviceSchema = z.object({
     .string()
     .trim()
     .min(5, "Service description is required"),
+  // BUG 2 FIX: z.coerce.string() ensures that if the JSON body sends price as
+  // a number (e.g. 20 instead of "20"), it is coerced to "20" rather than
+  // failing validation. Free-text labels like "just ₹20", "From ₹9,999",
+  // "Contact Us" all round-trip correctly without any digit loss.
   price: z
-    .string()
-    .trim()
-    .min(1, "Service price is required (e.g. ₹18,000 or From ₹9,999)"),
+    .union([z.string(), z.number()])
+    .transform((val) => String(val).trim())
+    .refine((val) => val.length >= 1, "Service price is required (e.g. ₹18,000 or From ₹9,999)"),
   tagline: z.string().trim().optional(),
   features: z.array(z.string()).optional(),
   imageUrl: z

@@ -5,10 +5,10 @@
     "email": "divya.prakash@gmail.com",
     "phone": "9944512340",
     "message": "Inquiry about bridal makeover slot for November 12th Muhurtham in Salem. Do you also provide saree pre-pleating and jewellery on rent?",
-    "status": "unread",
-    "isDeleted": false,
+    "status": "read",
+    "isDeleted": true,
     "createdAt": "2026-08-21T04:00:00.000Z",
-    "updatedAt": "2026-08-21T04:00:00.000Z"
+    "updatedAt": "2026-08-21T06:20:49.238Z"
   },
   {
     "_id": "65f000000000000000000002",
@@ -17,8 +17,8 @@
     "phone": "9876543210",
     "message": "Looking for antique Lakshmi temple jewellery set rental for reception. Please send rental details and trial timings.",
     "status": "read",
-    "isDeleted": false,
+    "isDeleted": true,
     "createdAt": "2026-08-20T14:20:00.000Z",
-    "updatedAt": "2026-08-20T14:20:00.000Z"
+    "updatedAt": "2026-08-21T06:21:07.195Z"
   }
 ]

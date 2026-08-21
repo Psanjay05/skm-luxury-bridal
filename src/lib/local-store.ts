@@ -107,10 +107,13 @@ export function updateLocalService(id: string, data: Partial<ServiceRecord>): Se
   const index = all.findIndex((s) => s._id === id);
   const now = new Date().toISOString();
 
+  // BUG 2 FIX: Always coerce price to string to prevent accidental numeric storage
+  const safeData = data.price !== undefined ? { ...data, price: String(data.price).trim() } : data;
+
   if (index !== -1) {
     all[index] = {
       ...all[index],
-      ...data,
+      ...safeData,
       _id: id,
       updatedAt: now,
     };
