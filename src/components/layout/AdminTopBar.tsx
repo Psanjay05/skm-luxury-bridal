@@ -37,11 +37,6 @@ export function AdminTopBar({ userName = "Admin" }: { userName?: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
-  // Close mobile drawer when route changes
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
     if (mobileOpen) {

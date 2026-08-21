@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Award, CheckCircle2, Heart, Sparkles, Star, MapPin, Calendar, Phone, ArrowRight, ShieldCheck, Gem } from "lucide-react";
+import { Award, CheckCircle2, Heart, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AboutPage() {
@@ -97,7 +97,7 @@ export default function AboutPage() {
                 <Heart className="text-primary" size={20} /> My Artistic Philosophy
               </h3>
               <p className="text-sm italic text-foreground/90">
-                "Bridal makeup isn't about altering how you look; it's about amplifying your authentic beauty so you radiate poise and confidence on your special day."
+                &ldquo;Bridal makeup isn&apos;t about altering how you look; it&apos;s about amplifying your authentic beauty so you radiate poise and confidence on your special day.&rdquo;
               </p>
             </div>
 

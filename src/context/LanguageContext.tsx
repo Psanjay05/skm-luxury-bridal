@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { Language, TranslationDictionary, translations } from "@/lib/translations";
 
 interface LanguageContextType {
@@ -13,18 +13,19 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("en");
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("skm_bridal_lang") as Language;
-      if (saved === "en" || saved === "ta") {
-        setLanguageState(saved);
+  const [language, setLanguageState] = useState<Language>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("skm_bridal_lang") as Language;
+        if (saved === "en" || saved === "ta") {
+          return saved;
+        }
+      } catch {
+        // localStorage may not be available in SSR or private mode
       }
-    } catch {
-      // localStorage may not be available in private mode
     }
-  }, []);
+    return "en";
+  });
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);

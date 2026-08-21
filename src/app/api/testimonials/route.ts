@@ -6,21 +6,72 @@ import { handleApiError } from "@/lib/errors";
 import { testimonialSchema } from "@/lib/validations/testimonial";
 import { checkRateLimit } from "@/lib/rate-limit";
 
+export const INITIAL_TESTIMONIALS = [
+  {
+    _id: "65c000000000000000000001",
+    customerName: "Priya & Karthik",
+    review: "Maha Shree ma'am created the absolute bridal look of my dreams! The HD makeup lasted all day through heat and tears without cracking or getting shiny.",
+    rating: 5,
+    isFeatured: true,
+    isDeleted: false,
+  },
+  {
+    _id: "65c000000000000000000002",
+    customerName: "Ananya R.",
+    review: "The saree draping precision and hair styling for my Muhurtham were flawless. Every relative complimented my look. SKM is the best in Salem!",
+    rating: 5,
+    isFeatured: true,
+    isDeleted: false,
+  },
+  {
+    _id: "65c000000000000000000003",
+    customerName: "Deepika S.",
+    review: "I took the Royal Airbrush Bridal Package. Truly felt like royalty on my reception night! Highly recommend Maha Shree for all brides.",
+    rating: 5,
+    isFeatured: true,
+    isDeleted: false,
+  },
+];
+
 // GET testimonials (Public GET returns non-deleted, option for all in admin)
 export async function GET(req: Request) {
   try {
-    await connectToDatabase();
-    const session = await auth();
     const { searchParams } = new URL(req.url);
     const featuredOnly = searchParams.get("featured") === "true";
 
-    const filter: Record<string, unknown> = { isDeleted: false };
-    if (!session || featuredOnly) {
-      filter.isFeatured = true;
-    }
+    try {
+      await connectToDatabase();
+      const session = await auth();
 
-    const testimonials = await Testimonial.find(filter).sort({ createdAt: -1 }).lean();
-    return NextResponse.json({ success: true, data: testimonials });
+      // Auto-seed initial testimonials if collection is empty
+      const count = await Testimonial.countDocuments({ isDeleted: false });
+      if (count === 0) {
+        const seedPayload = INITIAL_TESTIMONIALS.map(({ _id: _, ...item }) => item);
+        await Testimonial.insertMany(seedPayload);
+      }
+
+      const filter: Record<string, unknown> = { isDeleted: false };
+      if (!session || featuredOnly) {
+        filter.isFeatured = true;
+      }
+
+      const testimonials = await Testimonial.find(filter).sort({ createdAt: -1 }).lean();
+      return NextResponse.json({ success: true, data: testimonials });
+    } catch (dbErr: unknown) {
+      const dbErrorMessage = dbErr instanceof Error ? dbErr.message : String(dbErr);
+      console.warn("[GET_TESTIMONIALS] MongoDB unavailable, returning fallback testimonials:", dbErrorMessage);
+
+      const filtered = featuredOnly
+        ? INITIAL_TESTIMONIALS.filter((t) => t.isFeatured)
+        : INITIAL_TESTIMONIALS;
+
+      return NextResponse.json({
+        success: true,
+        data: filtered,
+        fallback: true,
+        warning: `Database unavailable (${dbErrorMessage}). Showing static testimonials.`,
+      });
+    }
   } catch (err) {
     return handleApiError(err, "Failed to fetch testimonials.");
   }

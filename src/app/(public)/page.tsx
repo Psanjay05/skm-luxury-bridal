@@ -271,7 +271,7 @@ export default function HomePage() {
               </h2>
               <div className="w-16 h-1 bg-primary" />
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Hi, I'm <strong className="text-foreground">Maha Shree</strong>, certified professional MUA and founder of SKM Luxury Bridal Studio in Salem. I specialize in crafting bespoke bridal makeovers that highlight your natural beauty, outfit textures, and personal wedding aesthetic.
+                Hi, I&apos;m <strong className="text-foreground">Maha Shree</strong>, certified professional MUA and founder of SKM Luxury Bridal Studio in Salem. I specialize in crafting bespoke bridal makeovers that highlight your natural beauty, outfit textures, and personal wedding aesthetic.
               </p>
               <p className="text-base text-muted-foreground leading-relaxed">
                 From long-lasting HD & Airbrush makeup to intricate hair styling, antique temple jewellery rental, Mehendi artistry, and Saree box pleating, we handle every detail so you shine with absolute elegance and confidence.
@@ -279,7 +279,7 @@ export default function HomePage() {
 
               <div className="pt-2">
                 <Link href="/about" className="inline-flex items-center gap-2 text-primary font-semibold hover:text-primary/80 transition-colors uppercase tracking-widest text-xs border-b border-primary/40 pb-1">
-                  Read Maha Shree's Full Story & Certifications <ArrowRight size={16} />
+                  Read Maha Shree&apos;s Full Story & Certifications <ArrowRight size={16} />
                 </Link>
               </div>
             </motion.div>
@@ -319,7 +319,7 @@ export default function HomePage() {
 
             <div className="lg:col-span-6 space-y-6 text-left">
               <span className="text-xs uppercase font-bold tracking-widest text-primary px-3 py-1 rounded-full bg-primary/10 inline-block">
-                Maha Shree's Signature Method
+                Maha Shree&apos;s Signature Method
               </span>
               <h3 className="font-heading text-3xl font-bold text-foreground leading-tight">
                 No Patchiness. No Flashback. Pure Natural Radiance.

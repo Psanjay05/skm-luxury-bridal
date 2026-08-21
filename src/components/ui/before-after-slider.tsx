@@ -126,25 +126,18 @@ export function BeforeAfterSlider({
           </div>
         </div>
 
-        {/* BEFORE Image (Clipped Overlay) */}
+        {/* BEFORE Image (Clipped Overlay with CSS inset) */}
         <div
           className="absolute inset-0 h-full overflow-hidden bg-muted pointer-events-none"
-          style={{ width: `${sliderPosition}%` }}
+          style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
         >
-          <div
-            className="relative h-full"
-            style={{
-              width: containerRef.current ? `${containerRef.current.clientWidth}px` : "100%",
-            }}
-          >
-            <Image
-              src={beforeImage}
-              alt={beforeAlt}
-              fill
-              className="object-cover object-top pointer-events-none"
-              priority
-            />
-          </div>
+          <Image
+            src={beforeImage}
+            alt={beforeAlt}
+            fill
+            className="object-cover object-top pointer-events-none"
+            priority
+          />
           <div className="absolute bottom-4 left-4 z-10 bg-background/90 backdrop-blur-md px-3 py-1 rounded-full border border-border/80 text-[10px] sm:text-xs uppercase tracking-widest font-bold text-muted-foreground shadow-lg">
             {beforeLabel}
           </div>

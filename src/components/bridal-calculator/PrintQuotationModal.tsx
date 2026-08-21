@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { X, Printer, Sparkles, Phone, MapPin, Check, ShieldCheck } from "lucide-react";
+import React, { useMemo } from "react";
+import { X, Printer, Sparkles, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PrintQuotationModalProps {
@@ -19,14 +19,19 @@ export function PrintQuotationModal({
   selectedAddons,
   totalCost,
 }: PrintQuotationModalProps) {
-  if (!isOpen) return null;
+  const quoteDate = useMemo(() => {
+    return new Date().toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  }, []);
 
-  const quoteDate = new Date().toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const quoteRef = `SKM-EST-${Date.now().toString().slice(-6)}`;
+  const quoteRef = useMemo(() => {
+    return `SKM-EST-${totalCost.toString().slice(-4)}${selectedFunctions.length}${selectedAddons.length}`;
+  }, [totalCost, selectedFunctions.length, selectedAddons.length]);
+
+  if (!isOpen) return null;
 
   const handlePrint = () => {
     window.print();

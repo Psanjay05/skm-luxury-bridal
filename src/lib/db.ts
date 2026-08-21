@@ -1,12 +1,18 @@
 import mongoose from "mongoose";
 
-let cached = (global as any).mongoose;
-
-if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
 }
 
-async function connectToDatabase() {
+declare global {
+  // eslint-disable-next-line no-var
+  var mongooseGlobal: MongooseCache | undefined;
+}
+
+const cached: MongooseCache = global.mongooseGlobal ?? (global.mongooseGlobal = { conn: null, promise: null });
+
+async function connectToDatabase(): Promise<typeof mongoose> {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
     throw new Error(
@@ -24,8 +30,8 @@ async function connectToDatabase() {
       serverSelectionTimeoutMS: 3000, // Quick 3s timeout for fallback handling
     };
 
-    cached.promise = mongoose.connect(uri, opts).then((mongoose) => {
-      return mongoose;
+    cached.promise = mongoose.connect(uri, opts).then((mongooseInstance) => {
+      return mongooseInstance;
     });
   }
 

@@ -6,8 +6,8 @@ export const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID || "G-SKMBRIDAL26";
 
 declare global {
   interface Window {
-    gtag?: (...args: any[]) => void;
-    dataLayer?: any[];
+    gtag?: (...args: unknown[]) => void;
+    dataLayer?: unknown[];
   }
 }
 
@@ -31,7 +31,7 @@ export type GTagEvent =
 
 export const trackEvent = (
   eventName: GTagEvent | string,
-  parameters: Record<string, any> = {}
+  parameters: Record<string, unknown> = {}
 ) => {
   if (typeof window !== "undefined" && window.gtag) {
     window.gtag("event", eventName, parameters);

@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   CalendarCheck,
   ImageIcon,
-  MessageSquare,
   Star,
   HelpCircle,
   Settings,
@@ -18,7 +17,6 @@ import {
   Sparkles,
   Phone,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const NAV = [

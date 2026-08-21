@@ -363,7 +363,7 @@ export default function GalleryPage() {
               Latest Posts from Instagram
             </h2>
             <p className="text-muted-foreground text-sm max-w-xl mx-auto">
-              Live real-time updates from Maha Shree's official Instagram page. Follow for daily transformation reels, hairdo tutorials, and jewellery styling!
+              Live real-time updates from Maha Shree&apos;s official Instagram page. Follow for daily transformation reels, hairdo tutorials, and jewellery styling!
             </p>
           </div>
 
