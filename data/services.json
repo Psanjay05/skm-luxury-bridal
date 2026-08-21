@@ -2,57 +2,50 @@
   {
     "_id": "65a000000000000000000001",
     "title": "Classic Bridal Package",
-    "price": "₹19,000",
+    "price": "₹18,000",
     "tagline": "Essential HD makeover for budget-conscious brides",
     "description": "High Definition (HD) Foundation Base, Traditional Hair Styling & Flower Draping, Saree Box Pleating, Eyelash Extension, Studio Consultation.",
     "imageUrl": "/images/portfolio/traditional-south-indian-bride.jpg",
     "category": "bridal_package",
-    "ctaText": "Book Classic Package",
-    "updatedAt": "2026-08-21T05:43:43.245Z"
+    "ctaText": "Book Classic Package"
   },
   {
     "_id": "65a000000000000000000002",
     "title": "Royal HD Makeover Package",
-    "price": "30",
+    "price": "₹25,000",
     "tagline": "Our most popular 2-event Muhurtham + Reception package",
     "description": "HD Base for Muhurtham & Reception, 2 Hairstyles, Premium Saree Pre-Pleating, Free Trial Session, Jewellery Discount, Mother Touch-Up.",
     "imageUrl": "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
     "category": "bridal_package",
-    "ctaText": "Book Royal HD Package",
-    "updatedAt": "2026-08-21T05:25:52.347Z"
+    "ctaText": "Book Royal HD Package"
   },
   {
     "_id": "65a000000000000000000003",
     "title": "Luxury Airbrush Grand Package",
-    "price": "₹35",
+    "price": "₹35,000",
     "tagline": "18+ Hour waterproof Airbrush finish for grand stage weddings",
     "description": "18-Hour Waterproof Airbrush Base, 3 Event Looks, Senior Hairstylist & Saree Team, Studio Trial, Temple Jewellery Included, 2 Family Touch-Ups.",
     "imageUrl": "/images/portfolio/before-after-hd-makeover.jpg",
     "category": "bridal_package",
-    "ctaText": "Book Luxury Airbrush",
-    "updatedAt": "2026-08-21T05:26:12.049Z"
+    "ctaText": "Book Luxury Airbrush"
   },
   {
     "_id": "65a000000000000000000004",
     "title": "HD Sweat-Proof Bridal Makeup",
-    "price": "From ₹9",
+    "price": "From ₹9,999",
     "description": "Long-lasting high-definition pigments for camera clarity and natural skin finish.",
     "imageUrl": "/images/portfolio/bridal-close-up-portrait.jpg",
     "category": "makeup",
-    "ctaText": "Book HD Makeup",
-    "tagline": "",
-    "updatedAt": "2026-08-21T05:26:31.715Z"
+    "ctaText": "Book HD Makeup"
   },
   {
     "_id": "65a000000000000000000005",
     "title": "Airbrush Waterproof Makeover",
-    "price": "From ₹120",
+    "price": "From ₹12,999",
     "description": "18+ hour stage-ready waterproof airbrush finish for heavy mandap heat.",
     "imageUrl": "/images/portfolio/before-after-hd-makeover.jpg",
     "category": "makeup",
-    "ctaText": "Book Airbrush",
-    "tagline": "",
-    "updatedAt": "2026-08-21T05:26:50.346Z"
+    "ctaText": "Book Airbrush"
   },
   {
     "_id": "65a000000000000000000006",

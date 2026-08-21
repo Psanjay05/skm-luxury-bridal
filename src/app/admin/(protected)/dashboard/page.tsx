@@ -9,6 +9,14 @@ import Testimonial from "@/models/Testimonial";
 import FAQ from "@/models/FAQ";
 import Link from "next/link";
 import {
+  getLocalBookings,
+  getLocalMessages,
+  getLocalGallery,
+  getLocalServices,
+  getLocalTestimonials,
+  getLocalFaqs,
+} from "@/lib/local-store";
+import {
   CalendarCheck,
   ImageIcon,
   MessageSquare,
@@ -35,6 +43,13 @@ interface ActivityItem {
 }
 
 async function getDashboardData() {
+  const localBookings = getLocalBookings();
+  const localMessages = getLocalMessages();
+  const localGallery = getLocalGallery();
+  const localServices = getLocalServices();
+  const localTestimonials = getLocalTestimonials();
+  const localFaqs = getLocalFaqs();
+
   try {
     await connectToDatabase();
     const [
@@ -87,31 +102,56 @@ async function getDashboardData() {
 
     return {
       stats: {
-        totalBookings,
-        pendingBookings,
-        unreadMessages,
-        totalMessages,
-        galleryImages,
-        totalServices,
-        totalTestimonials,
-        totalFaqs,
+        totalBookings: Math.max(totalBookings, localBookings.length),
+        pendingBookings: Math.max(pendingBookings, localBookings.filter((b) => b.status === "pending").length),
+        unreadMessages: Math.max(unreadMessages, localMessages.filter((m) => m.status === "unread").length),
+        totalMessages: Math.max(totalMessages, localMessages.length),
+        galleryImages: Math.max(galleryImages, localGallery.length),
+        totalServices: Math.max(totalServices, localServices.length),
+        totalTestimonials: Math.max(totalTestimonials, localTestimonials.length),
+        totalFaqs: Math.max(totalFaqs, localFaqs.length),
       },
       recentActivity,
     };
   } catch (err) {
-    console.error("[DASHBOARD_STATS_ERROR]", err);
+    console.warn("[DASHBOARD_STATS_OFFLINE] Using local persistent store stats:", err);
+
+    const formattedBookings: ActivityItem[] = localBookings.slice(0, 5).map((b) => ({
+      id: b._id,
+      type: "booking",
+      title: `Booking Request: ${b.customerName}`,
+      subtitle: `${b.service} - ${b.phone}`,
+      date: new Date(b.createdAt || Date.now()),
+      status: b.status,
+      link: "/admin/bookings",
+    }));
+
+    const formattedMessages: ActivityItem[] = localMessages.slice(0, 5).map((m) => ({
+      id: m._id,
+      type: "message",
+      title: `Contact Inquiry: ${m.name}`,
+      subtitle: m.message,
+      date: new Date(m.createdAt || Date.now()),
+      status: m.status,
+      link: "/admin/messages",
+    }));
+
+    const recentActivity = [...formattedBookings, ...formattedMessages]
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 5);
+
     return {
       stats: {
-        totalBookings: 0,
-        pendingBookings: 0,
-        unreadMessages: 0,
-        totalMessages: 0,
-        galleryImages: 0,
-        totalServices: 0,
-        totalTestimonials: 0,
-        totalFaqs: 0,
+        totalBookings: localBookings.length,
+        pendingBookings: localBookings.filter((b) => b.status === "pending").length,
+        unreadMessages: localMessages.filter((m) => m.status === "unread").length,
+        totalMessages: localMessages.length,
+        galleryImages: localGallery.length,
+        totalServices: localServices.length,
+        totalTestimonials: localTestimonials.length,
+        totalFaqs: localFaqs.length,
       },
-      recentActivity: [],
+      recentActivity,
     };
   }
 }
