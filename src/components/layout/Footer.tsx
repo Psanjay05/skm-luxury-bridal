@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MapPin, Phone, Mail, Award, Plane } from "lucide-react";
+import { QRCodeModal } from "@/components/shared/QRCodeModal";
 
 // Inline Instagram SVG
 function InstagramIcon({ size = 18 }: { size?: number }) {
@@ -142,9 +143,12 @@ export function Footer() {
           <p className="text-muted-foreground text-sm text-center md:text-left">
             &copy; {new Date().getFullYear()} SKM Luxury Bridal Studio (Salem Makeover Artistry). All rights reserved.
           </p>
-          <p className="text-muted-foreground text-sm">
-            Founder & Artist: <span className="text-foreground font-semibold">Maha Shree</span> (@mahsri_sanjeev_23)
-          </p>
+          <div className="flex items-center gap-4">
+            <QRCodeModal />
+            <p className="text-muted-foreground text-sm">
+              Founder: <span className="text-foreground font-semibold">Maha Shree</span> (@mahsri_sanjeev_23)
+            </p>
+          </div>
         </div>
       </div>
     </footer>
