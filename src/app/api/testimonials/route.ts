@@ -19,36 +19,38 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const featuredOnly = searchParams.get("featured") === "true";
 
-    const localTestimonials = getLocalTestimonials(featuredOnly);
-
     try {
       await connectToDatabase();
       const session = await auth();
-
-      // Auto-seed initial testimonials if collection is empty
-      const count = await Testimonial.countDocuments({ isDeleted: false });
-      if (count === 0 && localTestimonials.length > 0) {
-        const seedPayload = localTestimonials.map(({ _id: _, ...item }) => item);
-        await Testimonial.insertMany(seedPayload);
-      }
 
       const filter: Record<string, unknown> = { isDeleted: false };
       if (!session || featuredOnly) {
         filter.isFeatured = true;
       }
 
-      const dbTestimonials = await Testimonial.find(filter).sort({ createdAt: -1 }).lean();
-      if (dbTestimonials && dbTestimonials.length > 0) {
-        return NextResponse.json(
-          { success: true, data: localTestimonials.length > 0 ? localTestimonials : dbTestimonials },
-          { headers: { "Cache-Control": "no-store, max-age=0" } }
-        );
+      // Auto-seed initial testimonials if collection is empty
+      const count = await Testimonial.countDocuments({ isDeleted: false });
+      if (count === 0) {
+        const localTestimonials = getLocalTestimonials(featuredOnly);
+        if (localTestimonials.length > 0) {
+          const seedPayload = localTestimonials.map(({ _id: _, ...item }) => item);
+          await Testimonial.insertMany(seedPayload);
+        }
       }
+
+      // DB is the single source of truth when reachable
+      const dbTestimonials = await Testimonial.find(filter).sort({ createdAt: -1 }).lean();
+      return NextResponse.json(
+        { success: true, data: dbTestimonials },
+        { headers: { "Cache-Control": "no-store, max-age=0" } }
+      );
     } catch (dbErr: unknown) {
       const dbErrorMessage = dbErr instanceof Error ? dbErr.message : String(dbErr);
       console.warn("[GET_TESTIMONIALS] MongoDB unavailable, loading local store:", dbErrorMessage);
     }
 
+    // Fallback when MongoDB is unreachable
+    const localTestimonials = getLocalTestimonials(featuredOnly);
     return NextResponse.json(
       { success: true, data: localTestimonials },
       { headers: { "Cache-Control": "no-store, max-age=0" } }

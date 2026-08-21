@@ -19,6 +19,10 @@ const deleteGallerySchema = z.object({
 
 export async function GET(req: Request) {
   try {
+    // SKM-003 FIX: Admin gallery GET must require authentication
+    const session = await auth();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     await connectToDatabase();
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
@@ -28,6 +32,7 @@ export async function GET(req: Request) {
     return NextResponse.json(images);
   } catch (err) {
     return handleApiError(err, "Failed to fetch gallery images.");
+
   }
 }
 

@@ -40,22 +40,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           console.error("[AUTH_DB_ERROR]", dbErr);
         }
 
-        // Fallback for development if database is not yet seeded or offline (rotatable via env var)
-        const defaultAdminUser = process.env.ADMIN_DEFAULT_USERNAME || process.env.ADMIN_USERNAME || "admin";
-        const defaultAdminPass = process.env.ADMIN_DEFAULT_PASSWORD || process.env.ADMIN_PASSWORD || "LuxuryBridal@2026";
+        // SKM-006 FIX: Only allow env-var credential fallback in non-production environments.
+        // This lets developers log in without a seeded DB in dev/staging,
+        // but NEVER allows hardcoded credentials to work in production.
+        // In production, the MongoDB Admin record is the ONLY valid credential.
+        const isProduction = process.env.NODE_ENV === "production";
+        if (!isProduction) {
+          const defaultAdminUser = process.env.ADMIN_DEFAULT_USERNAME || process.env.ADMIN_USERNAME;
+          const defaultAdminPass = process.env.ADMIN_DEFAULT_PASSWORD || process.env.ADMIN_PASSWORD;
 
-        if (
-          credentials.username === defaultAdminUser &&
-          credentials.password === defaultAdminPass
-        ) {
-          return {
-            id: "default-admin-id",
-            name: "Maha Shree",
-            username: defaultAdminUser,
-          };
+          if (
+            defaultAdminUser &&
+            defaultAdminPass &&
+            credentials.username === defaultAdminUser &&
+            credentials.password === defaultAdminPass
+          ) {
+            return {
+              id: "default-admin-id",
+              name: "Maha Shree",
+              username: defaultAdminUser,
+            };
+          }
         }
 
         return null;
+
       },
     }),
   ],
@@ -84,5 +93,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "skm-luxury-bridal-super-secret-key-2026-development",
+  // P0 FIX: Never fall back to a hardcoded string as the JWT signing secret.
+  // If AUTH_SECRET is not set, throw at startup so the misconfiguration is visible immediately.
+  // A hardcoded fallback means anyone with the source code can forge JWT sessions.
+  secret: (() => {
+    const s = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+    if (!s) {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error("[AUTH] AUTH_SECRET environment variable is required in production. Set it in Vercel environment variables.");
+      }
+      // Dev-only fallback to avoid blocking local startup; a warning is logged
+      console.warn("[AUTH] WARNING: AUTH_SECRET not set. Using insecure dev fallback. NEVER deploy this to production.");
+      return "dev-only-insecure-fallback-not-for-production";
+    }
+    return s;
+  })(),
 });

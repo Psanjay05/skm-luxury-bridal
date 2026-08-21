@@ -79,8 +79,14 @@ export async function PUT(req: Request) {
 
     // If admin document doesn't exist in DB yet (e.g. initial dev login), create it
     if (!admin) {
-      const defaultPass = process.env.ADMIN_DEFAULT_PASSWORD || process.env.ADMIN_PASSWORD || "LuxuryBridal@2026";
-      const hashedPassword = await bcrypt.hash(newPassword || defaultPass, 10);
+      // SKM-006 FIX: Require an explicit newPassword; do NOT fall back to hardcoded secret
+      if (!newPassword) {
+        return NextResponse.json(
+          { success: false, error: "Cannot initialize admin profile without a new password. Please provide a new password." },
+          { status: 400 }
+        );
+      }
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
       admin = await Admin.create({
         username: username || sessionUsername,
         password: hashedPassword,

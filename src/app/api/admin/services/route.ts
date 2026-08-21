@@ -35,19 +35,29 @@ const deleteServiceSchema = z.object({
   id: z.string().refine(isValidObjectId, { message: "Invalid service ID format" }),
 });
 
-export async function GET() {
+export async function GET(_req: Request) {
   try {
+    // Auth guard — also enforced at edge by proxy.ts
+    const session = await auth();
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+
     try {
       await connectToDatabase();
+      // DB is source of truth when reachable
       const services = await Service.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
-      if (services && services.length > 0) {
-        return NextResponse.json(services);
-      }
+      // P1 FIX: Return {success, data} envelope — admin page checks json.success && json.data
+      return NextResponse.json(
+        { success: true, data: services },
+        { headers: { "Cache-Control": "no-store, max-age=0" } }
+      );
     } catch (dbErr) {
       console.warn("[GET_ADMIN_SERVICES] DB offline, using local store:", dbErr);
     }
     const localServices = getLocalServices();
-    return NextResponse.json(localServices);
+    return NextResponse.json(
+      { success: true, data: localServices },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (err) {
     return handleApiError(err, "Failed to fetch services.");
   }

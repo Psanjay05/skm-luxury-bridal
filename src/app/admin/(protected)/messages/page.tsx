@@ -26,7 +26,7 @@ export default function MessagesAdminPage() {
     setLoading(true);
     setActionError(null);
     try {
-      const res = await fetch("/api/contact", {
+      const res = await fetch("/api/admin/messages", {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache, no-store" },
       });
@@ -51,7 +51,7 @@ export default function MessagesAdminPage() {
   const markRead = async (id: string) => {
     try {
       setActionError(null);
-      const res = await fetch(`/api/contact/${id}`, {
+      const res = await fetch(`/api/admin/messages/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "read" }),
@@ -69,7 +69,7 @@ export default function MessagesAdminPage() {
     if (!confirm("Delete this inquiry message?")) return;
     try {
       setActionError(null);
-      const res = await fetch(`/api/contact/${id}`, {
+      const res = await fetch(`/api/admin/messages/${id}`, {
         method: "DELETE",
       });
       const json = await res.json();

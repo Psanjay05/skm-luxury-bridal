@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
+const isDev = process.env.NODE_ENV !== "production";
+
 export function handleApiError(error: unknown, userMessage = "An unexpected error occurred.") {
   const errorMessage = error instanceof Error ? error.message : String(error);
-  // Log detailed error on server for diagnostics
+  // Log detailed error on server for diagnostics — never exposed to client in production
   console.error("[API_ERROR]", {
     userMessage,
     error: errorMessage,
@@ -12,18 +14,23 @@ export function handleApiError(error: unknown, userMessage = "An unexpected erro
   if (error instanceof Error) {
     if (error.name === "BSONError" || error.name === "CastError") {
       return NextResponse.json(
-        { success: false, error: "Invalid resource identifier format.", details: errorMessage },
+        {
+          success: false,
+          error: "Invalid resource identifier format.",
+          // SKM-005 FIX: Only expose internal details in development
+          ...(isDev && { details: errorMessage }),
+        },
         { status: 400 }
       );
     }
   }
 
-  // Return formatted error message with server diagnostics surfaced clearly
+  // SKM-005 FIX: Never expose internal error details in production
   return NextResponse.json(
     {
       success: false,
       error: userMessage,
-      details: errorMessage,
+      ...(isDev && { details: errorMessage }),
     },
     { status: 500 }
   );

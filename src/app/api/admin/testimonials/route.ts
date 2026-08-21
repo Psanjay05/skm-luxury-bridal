@@ -29,9 +29,17 @@ const deleteTestimonialSchema = z.object({
 
 export async function GET() {
   try {
-    await connectToDatabase();
-    const testimonials = await Testimonial.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
-    return NextResponse.json(testimonials);
+    const session = await auth();
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+
+    try {
+      await connectToDatabase();
+      const testimonials = await Testimonial.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
+      return NextResponse.json({ success: true, data: testimonials }, { headers: { "Cache-Control": "no-store, max-age=0" } });
+    } catch (dbErr) {
+      console.warn("[GET_ADMIN_TESTIMONIALS] DB offline:", dbErr);
+    }
+    return NextResponse.json({ success: true, data: [] }, { headers: { "Cache-Control": "no-store, max-age=0" } });
   } catch (err) {
     return handleApiError(err, "Failed to fetch testimonials.");
   }

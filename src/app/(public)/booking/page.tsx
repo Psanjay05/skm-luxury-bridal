@@ -23,6 +23,18 @@ import {
 } from "lucide-react";
 import { trackEvent } from "@/lib/gtag";
 
+// Static tag labels for known services (display enhancement only)
+const STATIC_SERVICE_TAGS: Record<string, string> = {
+  "Royal HD Makeover Package": "Most Popular",
+  "Classic Bridal Package": "Essential",
+  "Luxury Airbrush Grand Package": "Waterproof 18h",
+  "Luxury HD Bridal Makeup": "HD Finish",
+  "Airbrush Bridal Makeup": "Airbrush",
+  "Reception / Engagement Makeup": "Evening Glam",
+  "Saree Draping & Hair Styling": "Box Pleating",
+  "Jewellery Rental Service": "Temple Gold",
+};
+
 const SERVICE_OPTIONS = [
   { name: "Royal HD Makeover Package", price: "₹25,000", tag: "Most Popular" },
   { name: "Classic Bridal Package", price: "₹18,000", tag: "Essential" },
@@ -91,15 +103,15 @@ function BookingFormContent() {
         });
         const json = await res.json();
         if (res.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
-          const dbServices: Array<{ title: string; price: string }> = json.data;
-          setServiceOptions((prev) =>
-            prev.map((opt) => {
-              const match = dbServices.find(
-                (s) => s.title.toLowerCase().trim() === opt.name.toLowerCase().trim()
-              );
-              return match ? { ...opt, price: match.price } : opt;
-            })
-          );
+          // SKM-007 FIX: Build the full service list from DB, not just update prices.
+          // This ensures any new service added in admin appears in the booking form.
+          const dbServices: Array<{ title: string; price: string; category?: string }> = json.data;
+          const merged = dbServices.map((s) => ({
+            name: s.title,
+            price: s.price,
+            tag: STATIC_SERVICE_TAGS[s.title] || s.category || "",
+          }));
+          setServiceOptions(merged);
         }
       } catch (err) {
         console.warn("[BOOKING_PAGE] Failed to load live services:", err);
@@ -107,6 +119,7 @@ function BookingFormContent() {
     }
     loadLiveServices();
   }, []);
+
 
   useEffect(() => {
     if (serviceParam) {

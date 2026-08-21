@@ -17,11 +17,27 @@ const deleteMessageSchema = z.object({
 export async function GET() {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    await connectToDatabase();
-    const messages = await ContactMessage.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
-    return NextResponse.json(messages);
+    try {
+      await connectToDatabase();
+      // DB is the single source of truth when reachable
+      const messages = await ContactMessage.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
+      return NextResponse.json(
+        { success: true, data: messages },
+        { headers: { "Cache-Control": "no-store, max-age=0" } }
+      );
+    } catch (dbErr) {
+      console.warn("[GET_ADMIN_MESSAGES] DB offline, using local store:", dbErr);
+    }
+
+    // Fallback to local store when DB is unavailable
+    const { getLocalMessages } = await import("@/lib/local-store");
+    const localMessages = getLocalMessages();
+    return NextResponse.json(
+      { success: true, data: localMessages },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (err) {
     return handleApiError(err, "Failed to fetch contact messages.");
   }

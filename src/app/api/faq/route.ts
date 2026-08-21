@@ -12,21 +12,30 @@ export const revalidate = 0;
 // GET all non-deleted FAQs sorted by order (Public)
 export async function GET() {
   try {
-    const localFaqs = getLocalFaqs();
-
     try {
       await connectToDatabase();
-      const dbFaqs = await FAQ.find({ isDeleted: false }).sort({ order: 1, createdAt: -1 }).lean();
-      if (dbFaqs && dbFaqs.length > 0) {
-        return NextResponse.json(
-          { success: true, data: localFaqs.length > 0 ? localFaqs : dbFaqs },
-          { headers: { "Cache-Control": "no-store, max-age=0" } }
-        );
+      // Auto-seed initial FAQs if collection is empty
+      const count = await FAQ.countDocuments({ isDeleted: false });
+      if (count === 0) {
+        const localFaqs = getLocalFaqs();
+        if (localFaqs.length > 0) {
+          const seedPayload = localFaqs.map(({ _id: _, ...item }) => item);
+          await FAQ.insertMany(seedPayload);
+        }
       }
+
+      // DB is the single source of truth when reachable
+      const dbFaqs = await FAQ.find({ isDeleted: false }).sort({ order: 1, createdAt: -1 }).lean();
+      return NextResponse.json(
+        { success: true, data: dbFaqs },
+        { headers: { "Cache-Control": "no-store, max-age=0" } }
+      );
     } catch (dbErr) {
       console.warn("[GET_FAQS] DB offline, loading local FAQs:", dbErr);
     }
 
+    // Fallback when MongoDB is unreachable
+    const localFaqs = getLocalFaqs();
     return NextResponse.json(
       { success: true, data: localFaqs },
       { headers: { "Cache-Control": "no-store, max-age=0" } }

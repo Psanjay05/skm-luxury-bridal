@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "node scripts/seed.mjs"
+    "seed": "node scripts/seed.mjs",
+    "test:qa": "node scripts/test-e2e-suite.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

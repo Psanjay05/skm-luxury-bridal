@@ -432,7 +432,7 @@ export interface MessageRecord {
   email?: string;
   phone: string;
   message: string;
-  status: "unread" | "read";
+  status: "unread" | "read" | "archived";
   isDeleted?: boolean;
   createdAt?: string;
   updatedAt?: string;

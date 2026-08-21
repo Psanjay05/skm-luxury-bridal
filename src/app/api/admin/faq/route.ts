@@ -26,9 +26,17 @@ const deleteFaqSchema = z.object({
 
 export async function GET() {
   try {
-    await connectToDatabase();
-    const faqs = await FAQ.find({ isDeleted: false }).sort({ order: 1, createdAt: -1 }).lean();
-    return NextResponse.json(faqs);
+    const session = await auth();
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+
+    try {
+      await connectToDatabase();
+      const faqs = await FAQ.find({ isDeleted: false }).sort({ order: 1, createdAt: -1 }).lean();
+      return NextResponse.json({ success: true, data: faqs }, { headers: { "Cache-Control": "no-store, max-age=0" } });
+    } catch (dbErr) {
+      console.warn("[GET_ADMIN_FAQ] DB offline:", dbErr);
+    }
+    return NextResponse.json({ success: true, data: [] }, { headers: { "Cache-Control": "no-store, max-age=0" } });
   } catch (err) {
     return handleApiError(err, "Failed to fetch FAQs.");
   }

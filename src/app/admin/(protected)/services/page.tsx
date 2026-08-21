@@ -58,7 +58,7 @@ export default function ServicesAdminPage() {
     setLoading(true);
     setActionError(null);
     try {
-      const res = await fetch("/api/services", {
+      const res = await fetch("/api/admin/services", {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache, no-store" },
       });
@@ -97,7 +97,7 @@ export default function ServicesAdminPage() {
     setActionSuccess(null);
 
     try {
-      const url = editingId ? `/api/services/${editingId}` : "/api/services";
+      const url = editingId ? `/api/admin/services/${editingId}` : "/api/admin/services";
       const method = editingId ? "PATCH" : "POST";
 
       // BUG 2 FIX: Explicitly cast price to String before sending to API.
@@ -166,7 +166,7 @@ export default function ServicesAdminPage() {
     try {
       setActionError(null);
       setActionSuccess(null);
-      const res = await fetch(`/api/services/${id}`, {
+      const res = await fetch(`/api/admin/services/${id}`, {
         method: "DELETE",
       });
       const json = await res.json();

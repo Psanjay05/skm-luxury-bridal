@@ -51,7 +51,7 @@ export default function BookingsPage() {
     setLoading(true);
     setActionError(null);
     try {
-      const res = await fetch(`/api/bookings?status=${statusFilter}`, {
+      const res = await fetch(`/api/admin/bookings?status=${statusFilter}`, {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache, no-store" },
       });
@@ -91,7 +91,7 @@ export default function BookingsPage() {
   const updateStatus = async (id: string, status: string) => {
     try {
       setActionError(null);
-      const res = await fetch(`/api/bookings/${id}`, {
+      const res = await fetch(`/api/admin/bookings/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -108,7 +108,7 @@ export default function BookingsPage() {
     if (!confirm("Are you sure you want to delete this booking record?")) return;
     try {
       setActionError(null);
-      const res = await fetch(`/api/bookings/${id}`, {
+      const res = await fetch(`/api/admin/bookings/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete booking");
