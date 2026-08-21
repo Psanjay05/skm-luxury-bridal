@@ -5,6 +5,17 @@
     "phone": "918608194233",
     "message": "Automated QA inquiry message for testing synchronization.",
     "status": "unread",
+    "_id": "6a880650ec0d687e93c42d9a",
+    "isDeleted": false,
+    "createdAt": "2026-08-21T08:03:28.105Z",
+    "updatedAt": "2026-08-21T08:03:28.105Z"
+  },
+  {
+    "name": "QA Automated Test",
+    "email": "test@example.com",
+    "phone": "918608194233",
+    "message": "Automated QA inquiry message for testing synchronization.",
+    "status": "unread",
     "_id": "6a880454bfafb068ca27a685",
     "isDeleted": false,
     "createdAt": "2026-08-21T07:55:00.254Z",
