@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/db";
 import Testimonial from "@/models/Testimonial";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
 import { updateTestimonialSchema } from "@/lib/validations/testimonial";
+import { updateLocalTestimonial, deleteLocalTestimonial } from "@/lib/local-store";
 
 // PATCH toggle featured/approval status or update testimonial (Admin only)
 export async function PATCH(
@@ -31,14 +32,25 @@ export async function PATCH(
       );
     }
 
-    await connectToDatabase();
-    const testimonial = await Testimonial.findByIdAndUpdate(id, parsed.data, { new: true });
+    let updatedTestimonial = null;
+    try {
+      await connectToDatabase();
+      const testimonial = await Testimonial.findByIdAndUpdate(id, parsed.data, { new: true });
+      if (testimonial) updatedTestimonial = testimonial;
+    } catch (dbErr) {
+      console.warn("[PATCH_TESTIMONIAL] DB offline, updating local:", dbErr);
+    }
 
-    if (!testimonial) {
+    const localUpdated = updateLocalTestimonial(id, parsed.data);
+    if (!updatedTestimonial && localUpdated) {
+      updatedTestimonial = localUpdated;
+    }
+
+    if (!updatedTestimonial) {
       return NextResponse.json({ success: false, error: "Testimonial not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: testimonial });
+    return NextResponse.json({ success: true, data: updatedTestimonial });
   } catch (err) {
     return handleApiError(err, "Failed to update testimonial.");
   }
@@ -60,15 +72,25 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: "Invalid testimonial ID" }, { status: 400 });
     }
 
-    await connectToDatabase();
-    const testimonial = await Testimonial.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+    let deleted = false;
+    try {
+      await connectToDatabase();
+      const testimonial = await Testimonial.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+      if (testimonial) deleted = true;
+    } catch (dbErr) {
+      console.warn("[DELETE_TESTIMONIAL] DB offline, deleting local:", dbErr);
+    }
 
-    if (!testimonial) {
+    const localDeleted = deleteLocalTestimonial(id);
+    if (localDeleted) deleted = true;
+
+    if (!deleted) {
       return NextResponse.json({ success: false, error: "Testimonial not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: { id: testimonial._id } });
+    return NextResponse.json({ success: true, data: { id } });
   } catch (err) {
     return handleApiError(err, "Failed to delete testimonial.");
   }
 }
+

@@ -6,6 +6,43 @@ import Service from "@/models/Service";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
 import { serviceSchema } from "@/lib/validations/service";
 import { INITIAL_SERVICES } from "@/app/api/services/route";
+import {
+  updateLocalService,
+  deleteLocalService,
+  getLocalServiceById,
+} from "@/lib/local-store";
+
+// GET single service by ID
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    if (!isValidObjectId(id)) {
+      return NextResponse.json({ success: false, error: "Invalid service ID" }, { status: 400 });
+    }
+
+    try {
+      await connectToDatabase();
+      const service = await Service.findById(id).lean();
+      if (service && !service.isDeleted) {
+        return NextResponse.json({ success: true, data: service });
+      }
+    } catch (dbErr) {
+      console.warn("[GET_SERVICE_ID] MongoDB unavailable, checking local store:", dbErr);
+    }
+
+    const localService = getLocalServiceById(id);
+    if (localService) {
+      return NextResponse.json({ success: true, data: localService });
+    }
+
+    return NextResponse.json({ success: false, error: "Service not found" }, { status: 404 });
+  } catch (err) {
+    return handleApiError(err, "Failed to fetch service.");
+  }
+}
 
 // PATCH update service (Admin only)
 export async function PATCH(
@@ -27,30 +64,51 @@ export async function PATCH(
     const parsed = serviceSchema.partial().safeParse(body);
 
     if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const errorMsg = Object.entries(fieldErrors)
+        .map(([k, v]) => `${k}: ${v?.join(", ")}`)
+        .join("; ");
       return NextResponse.json(
-        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { success: false, error: `Validation failed: ${errorMsg}`, details: fieldErrors },
         { status: 400 }
       );
     }
 
-    await connectToDatabase();
-    let service = await Service.findByIdAndUpdate(id, parsed.data, { new: true });
+    let updatedService = null;
 
-    // If item was loaded from initial dataset and not yet in DB, upsert it
-    if (!service) {
-      const initialMatch = INITIAL_SERVICES.find((s) => s._id === id);
-      if (initialMatch) {
-        const { _id: _, ...initialData } = initialMatch;
-        service = await Service.create({
-          _id: id,
-          ...initialData,
-          ...parsed.data,
-        });
+    // 1. Try updating in MongoDB if available
+    try {
+      await connectToDatabase();
+      let service = await Service.findByIdAndUpdate(id, parsed.data, { new: true });
+
+      // If item was loaded from initial dataset and not yet in DB, upsert it
+      if (!service) {
+        const initialMatch = INITIAL_SERVICES.find((s) => s._id === id);
+        if (initialMatch) {
+          const { _id: _, ...initialData } = initialMatch;
+          service = await Service.create({
+            _id: id,
+            ...initialData,
+            ...parsed.data,
+          });
+        }
       }
+
+      if (service) {
+        updatedService = service;
+      }
+    } catch (dbErr) {
+      console.warn("[PATCH_SERVICE] MongoDB update unavailable, saving to local store:", dbErr);
     }
 
-    if (!service) {
-      return NextResponse.json({ success: false, error: "Service not found in database" }, { status: 404 });
+    // 2. Always persist update to local store so changes persist across DB outages/restarts
+    const localUpdated = updateLocalService(id, parsed.data);
+    if (!updatedService && localUpdated) {
+      updatedService = localUpdated;
+    }
+
+    if (!updatedService) {
+      return NextResponse.json({ success: false, error: "Service not found to update" }, { status: 404 });
     }
 
     // Instant cache revalidation on website
@@ -58,7 +116,7 @@ export async function PATCH(
     revalidatePath("/bridal-packages");
     revalidatePath("/");
 
-    return NextResponse.json({ success: true, data: service });
+    return NextResponse.json({ success: true, data: updatedService });
   } catch (err) {
     return handleApiError(err, "Failed to update service.");
   }
@@ -80,10 +138,20 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: "Invalid service ID" }, { status: 400 });
     }
 
-    await connectToDatabase();
-    const service = await Service.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+    let deleted = false;
 
-    if (!service) {
+    try {
+      await connectToDatabase();
+      const service = await Service.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+      if (service) deleted = true;
+    } catch (dbErr) {
+      console.warn("[DELETE_SERVICE] MongoDB unavailable, deleting from local store:", dbErr);
+    }
+
+    const localDeleted = deleteLocalService(id);
+    if (localDeleted) deleted = true;
+
+    if (!deleted) {
       return NextResponse.json({ success: false, error: "Service not found" }, { status: 404 });
     }
 
@@ -92,8 +160,9 @@ export async function DELETE(
     revalidatePath("/bridal-packages");
     revalidatePath("/");
 
-    return NextResponse.json({ success: true, data: { id: service._id } });
+    return NextResponse.json({ success: true, data: { id } });
   } catch (err) {
     return handleApiError(err, "Failed to delete service.");
   }
 }
+

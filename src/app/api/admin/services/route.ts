@@ -4,6 +4,12 @@ import connectToDatabase from "@/lib/db";
 import Service from "@/models/Service";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
 import { z } from "zod";
+import {
+  getLocalServices,
+  saveLocalService,
+  updateLocalService,
+  deleteLocalService,
+} from "@/lib/local-store";
 
 const createServiceSchema = z.object({
   title: z.string().trim().min(2).max(100),
@@ -11,6 +17,7 @@ const createServiceSchema = z.object({
   category: z.string().trim().min(1),
   price: z.string().trim().optional(),
   features: z.array(z.string()).optional(),
+  imageUrl: z.string().trim().optional(),
 });
 
 const updateServiceSchema = z.object({
@@ -20,6 +27,7 @@ const updateServiceSchema = z.object({
   category: z.string().trim().min(1).optional(),
   price: z.string().trim().optional(),
   features: z.array(z.string()).optional(),
+  imageUrl: z.string().trim().optional(),
   isFeatured: z.boolean().optional(),
 });
 
@@ -29,9 +37,17 @@ const deleteServiceSchema = z.object({
 
 export async function GET() {
   try {
-    await connectToDatabase();
-    const services = await Service.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
-    return NextResponse.json(services);
+    try {
+      await connectToDatabase();
+      const services = await Service.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
+      if (services && services.length > 0) {
+        return NextResponse.json(services);
+      }
+    } catch (dbErr) {
+      console.warn("[GET_ADMIN_SERVICES] DB offline, using local store:", dbErr);
+    }
+    const localServices = getLocalServices();
+    return NextResponse.json(localServices);
   } catch (err) {
     return handleApiError(err, "Failed to fetch services.");
   }
@@ -51,9 +67,24 @@ export async function POST(req: Request) {
       );
     }
 
-    await connectToDatabase();
-    const service = await Service.create(parsed.data);
-    return NextResponse.json(service, { status: 201 });
+    let service = null;
+    try {
+      await connectToDatabase();
+      service = await Service.create(parsed.data);
+    } catch (dbErr) {
+      console.warn("[POST_ADMIN_SERVICES] DB offline, saving local:", dbErr);
+    }
+
+    const localService = saveLocalService({
+      title: parsed.data.title,
+      description: parsed.data.description,
+      category: parsed.data.category,
+      price: parsed.data.price || "From ₹9,999",
+      imageUrl: parsed.data.imageUrl || "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
+      features: parsed.data.features,
+    });
+
+    return NextResponse.json(service || localService, { status: 201 });
   } catch (err) {
     return handleApiError(err, "Failed to create service.");
   }
@@ -74,13 +105,20 @@ export async function PATCH(req: Request) {
     }
 
     const { id, ...updateData } = parsed.data;
-    await connectToDatabase();
-    const service = await Service.findByIdAndUpdate(id, updateData, { new: true });
-    if (!service) {
+    let service = null;
+    try {
+      await connectToDatabase();
+      service = await Service.findByIdAndUpdate(id, updateData, { new: true });
+    } catch (dbErr) {
+      console.warn("[PATCH_ADMIN_SERVICES] DB offline, saving local:", dbErr);
+    }
+
+    const localService = updateLocalService(id, updateData);
+    if (!service && !localService) {
       return NextResponse.json({ error: "Service not found" }, { status: 404 });
     }
 
-    return NextResponse.json(service);
+    return NextResponse.json(service || localService);
   } catch (err) {
     return handleApiError(err, "Failed to update service.");
   }
@@ -100,9 +138,19 @@ export async function DELETE(req: Request) {
       );
     }
 
-    await connectToDatabase();
-    const service = await Service.findByIdAndUpdate(parsed.data.id, { isDeleted: true }, { new: true });
-    if (!service) {
+    let deleted = false;
+    try {
+      await connectToDatabase();
+      const service = await Service.findByIdAndUpdate(parsed.data.id, { isDeleted: true }, { new: true });
+      if (service) deleted = true;
+    } catch (dbErr) {
+      console.warn("[DELETE_ADMIN_SERVICES] DB offline, deleting local:", dbErr);
+    }
+
+    const localDeleted = deleteLocalService(parsed.data.id);
+    if (localDeleted) deleted = true;
+
+    if (!deleted) {
       return NextResponse.json({ error: "Service not found" }, { status: 404 });
     }
 
@@ -111,3 +159,4 @@ export async function DELETE(req: Request) {
     return handleApiError(err, "Failed to delete service.");
   }
 }
+

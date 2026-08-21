@@ -50,6 +50,7 @@ export default function ServicesAdminPage() {
   const [form, setForm] = useState<Service>(EMPTY);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
 
@@ -63,7 +64,7 @@ export default function ServicesAdminPage() {
         setServices(json.data ?? []);
       } else {
         const errorMsg = json.details
-          ? `${json.error || "Failed to fetch services"} — ${json.details}`
+          ? `${json.error || "Failed to fetch services"} — ${typeof json.details === "string" ? json.details : JSON.stringify(json.details)}`
           : (json.error || `Failed to fetch services (HTTP ${res.status}).`);
         setActionError(errorMsg);
       }
@@ -88,6 +89,7 @@ export default function ServicesAdminPage() {
 
     setSaving(true);
     setActionError(null);
+    setActionSuccess(null);
 
     try {
       const url = editingId ? `/api/services/${editingId}` : "/api/services";
@@ -102,12 +104,28 @@ export default function ServicesAdminPage() {
       const json = await res.json();
 
       if (res.ok && json.success) {
+        // Optimistic instant UI update
+        if (editingId) {
+          setServices((prev) =>
+            prev.map((item) => (item._id === editingId ? { ...item, ...form } : item))
+          );
+          setActionSuccess(`Updated "${form.title}" price to ${form.price}. Live on website!`);
+        } else {
+          if (json.data) {
+            setServices((prev) => [json.data, ...prev]);
+          }
+          setActionSuccess(`Added "${form.title}" with price ${form.price}. Live on website!`);
+        }
+
         setOpen(false);
         setForm(EMPTY);
         setEditingId(null);
         fetchServices();
       } else {
-        setActionError(json.error || "Failed to save service price.");
+        const errorMsg = json.details
+          ? `${json.error || "Failed to save service price"} (${typeof json.details === "string" ? json.details : JSON.stringify(json.details)})`
+          : (json.error || "Failed to save service price.");
+        setActionError(errorMsg);
       }
     } catch (err) {
       console.error("[SAVE_SERVICE_ERROR]", err);
@@ -124,6 +142,8 @@ export default function ServicesAdminPage() {
       price: s.price || "From ₹9,999",
     });
     setEditingId(s._id ?? null);
+    setActionError(null);
+    setActionSuccess(null);
     setOpen(true);
   };
 
@@ -131,11 +151,14 @@ export default function ServicesAdminPage() {
     if (!confirm("Are you sure you want to remove this service from the website?")) return;
     try {
       setActionError(null);
+      setActionSuccess(null);
       const res = await fetch(`/api/services/${id}`, {
         method: "DELETE",
       });
       const json = await res.json();
       if (res.ok && json.success) {
+        setServices((prev) => prev.filter((s) => s._id !== id));
+        setActionSuccess("Service removed successfully.");
         fetchServices();
       } else {
         setActionError(json.error || "Failed to delete service.");
@@ -161,12 +184,25 @@ export default function ServicesAdminPage() {
           </p>
         </div>
         <Button
-          onClick={() => { setForm(EMPTY); setEditingId(null); setOpen(true); }}
+          onClick={() => { setForm(EMPTY); setEditingId(null); setOpen(true); setActionError(null); setActionSuccess(null); }}
           className="bg-primary text-primary-foreground gap-2 font-semibold shadow-md"
         >
           <Plus size={16} /> Add New Service / Package
         </Button>
       </div>
+
+      {/* Success Alert */}
+      {actionSuccess && (
+        <div className="p-3.5 text-sm rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-between gap-3 font-medium animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <Check size={16} className="shrink-0 text-emerald-500" />
+            <span>{actionSuccess}</span>
+          </div>
+          <button onClick={() => setActionSuccess(null)} className="text-xs hover:underline opacity-80">
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Error Alert */}
       {actionError && (

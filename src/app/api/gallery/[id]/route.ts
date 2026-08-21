@@ -5,6 +5,7 @@ import Gallery from "@/models/Gallery";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
 import { gallerySchema } from "@/lib/validations/gallery";
 import { INITIAL_GALLERY_ITEMS } from "@/app/api/gallery/route";
+import { updateLocalGallery, deleteLocalGallery } from "@/lib/local-store";
 
 // PATCH update gallery item (Admin only)
 export async function PATCH(
@@ -32,19 +33,29 @@ export async function PATCH(
       );
     }
 
-    await connectToDatabase();
-    let item = await Gallery.findByIdAndUpdate(id, parsed.data, { new: true });
+    let item = null;
+    try {
+      await connectToDatabase();
+      item = await Gallery.findByIdAndUpdate(id, parsed.data, { new: true });
 
-    if (!item) {
-      const initialMatch = INITIAL_GALLERY_ITEMS.find((g) => g._id === id);
-      if (initialMatch) {
-        const { _id: _, ...initialData } = initialMatch;
-        item = await Gallery.create({
-          _id: id,
-          ...initialData,
-          ...parsed.data,
-        });
+      if (!item) {
+        const initialMatch = INITIAL_GALLERY_ITEMS.find((g) => g._id === id);
+        if (initialMatch) {
+          const { _id: _, ...initialData } = initialMatch;
+          item = await Gallery.create({
+            _id: id,
+            ...initialData,
+            ...parsed.data,
+          });
+        }
       }
+    } catch (dbErr) {
+      console.warn("[PATCH_GALLERY] DB offline, updating local:", dbErr);
+    }
+
+    const localUpdated = updateLocalGallery(id, parsed.data);
+    if (!item && localUpdated) {
+      item = localUpdated;
     }
 
     if (!item) {
@@ -73,15 +84,25 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: "Invalid gallery ID" }, { status: 400 });
     }
 
-    await connectToDatabase();
-    const item = await Gallery.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+    let deleted = false;
+    try {
+      await connectToDatabase();
+      const item = await Gallery.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+      if (item) deleted = true;
+    } catch (dbErr) {
+      console.warn("[DELETE_GALLERY] DB offline, deleting local:", dbErr);
+    }
 
-    if (!item) {
+    const localDeleted = deleteLocalGallery(id);
+    if (localDeleted) deleted = true;
+
+    if (!deleted) {
       return NextResponse.json({ success: false, error: "Gallery item not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: { id: item._id } });
+    return NextResponse.json({ success: true, data: { id } });
   } catch (err) {
     return handleApiError(err, "Failed to delete gallery item.");
   }
 }
+

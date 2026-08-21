@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/db";
 import FAQ from "@/models/FAQ";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
 import { faqSchema } from "@/lib/validations/faq";
+import { updateLocalFaq, deleteLocalFaq } from "@/lib/local-store";
 
 // PATCH update FAQ item (Admin only)
 export async function PATCH(
@@ -31,8 +32,18 @@ export async function PATCH(
       );
     }
 
-    await connectToDatabase();
-    const faq = await FAQ.findByIdAndUpdate(id, parsed.data, { new: true });
+    let faq = null;
+    try {
+      await connectToDatabase();
+      faq = await FAQ.findByIdAndUpdate(id, parsed.data, { new: true });
+    } catch (dbErr) {
+      console.warn("[PATCH_FAQ] DB offline, saving local:", dbErr);
+    }
+
+    const localFaq = updateLocalFaq(id, parsed.data);
+    if (!faq && localFaq) {
+      faq = localFaq;
+    }
 
     if (!faq) {
       return NextResponse.json({ success: false, error: "FAQ item not found" }, { status: 404 });
@@ -60,15 +71,25 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: "Invalid FAQ ID" }, { status: 400 });
     }
 
-    await connectToDatabase();
-    const faq = await FAQ.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+    let deleted = false;
+    try {
+      await connectToDatabase();
+      const faq = await FAQ.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+      if (faq) deleted = true;
+    } catch (dbErr) {
+      console.warn("[DELETE_FAQ] DB offline, deleting local:", dbErr);
+    }
 
-    if (!faq) {
+    const localDeleted = deleteLocalFaq(id);
+    if (localDeleted) deleted = true;
+
+    if (!deleted) {
       return NextResponse.json({ success: false, error: "FAQ item not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: { id: faq._id } });
+    return NextResponse.json({ success: true, data: { id } });
   } catch (err) {
     return handleApiError(err, "Failed to delete FAQ item.");
   }
 }
+

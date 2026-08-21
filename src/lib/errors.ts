@@ -30,5 +30,5 @@ export function handleApiError(error: unknown, userMessage = "An unexpected erro
 }
 
 export function isValidObjectId(id: string): boolean {
-  return typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+  return typeof id === "string" && (/^[0-9a-fA-F]{24}$/.test(id) || /^[a-zA-Z0-9_-]{1,64}$/.test(id));
 }

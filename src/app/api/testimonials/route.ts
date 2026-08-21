@@ -6,32 +6,9 @@ import { handleApiError } from "@/lib/errors";
 import { testimonialSchema } from "@/lib/validations/testimonial";
 import { checkRateLimit } from "@/lib/rate-limit";
 
-export const INITIAL_TESTIMONIALS = [
-  {
-    _id: "65c000000000000000000001",
-    customerName: "Priya & Karthik",
-    review: "Maha Shree ma'am created the absolute bridal look of my dreams! The HD makeup lasted all day through heat and tears without cracking or getting shiny.",
-    rating: 5,
-    isFeatured: true,
-    isDeleted: false,
-  },
-  {
-    _id: "65c000000000000000000002",
-    customerName: "Ananya R.",
-    review: "The saree draping precision and hair styling for my Muhurtham were flawless. Every relative complimented my look. SKM is the best in Salem!",
-    rating: 5,
-    isFeatured: true,
-    isDeleted: false,
-  },
-  {
-    _id: "65c000000000000000000003",
-    customerName: "Deepika S.",
-    review: "I took the Royal Airbrush Bridal Package. Truly felt like royalty on my reception night! Highly recommend Maha Shree for all brides.",
-    rating: 5,
-    isFeatured: true,
-    isDeleted: false,
-  },
-];
+import { INITIAL_TESTIMONIALS } from "@/lib/initial-data";
+import { getLocalTestimonials, saveLocalTestimonial } from "@/lib/local-store";
+export { INITIAL_TESTIMONIALS };
 
 // GET testimonials (Public GET returns non-deleted, option for all in admin)
 export async function GET(req: Request) {
@@ -56,22 +33,19 @@ export async function GET(req: Request) {
       }
 
       const testimonials = await Testimonial.find(filter).sort({ createdAt: -1 }).lean();
-      return NextResponse.json({ success: true, data: testimonials });
+      if (testimonials && testimonials.length > 0) {
+        return NextResponse.json({ success: true, data: testimonials });
+      }
     } catch (dbErr: unknown) {
       const dbErrorMessage = dbErr instanceof Error ? dbErr.message : String(dbErr);
-      console.warn("[GET_TESTIMONIALS] MongoDB unavailable, returning fallback testimonials:", dbErrorMessage);
-
-      const filtered = featuredOnly
-        ? INITIAL_TESTIMONIALS.filter((t) => t.isFeatured)
-        : INITIAL_TESTIMONIALS;
-
-      return NextResponse.json({
-        success: true,
-        data: filtered,
-        fallback: true,
-        warning: `Database unavailable (${dbErrorMessage}). Showing static testimonials.`,
-      });
+      console.warn("[GET_TESTIMONIALS] MongoDB unavailable, loading local store:", dbErrorMessage);
     }
+
+    const localTestimonials = getLocalTestimonials(featuredOnly);
+    return NextResponse.json({
+      success: true,
+      data: localTestimonials,
+    });
   } catch (err) {
     return handleApiError(err, "Failed to fetch testimonials.");
   }
@@ -97,18 +71,29 @@ export async function POST(req: Request) {
       );
     }
 
-    await connectToDatabase();
+    let createdTestimonial = null;
     const session = await auth();
-
-    // Public submissions default to not featured/unapproved unless admin creates it
     const testimonialData = {
       ...parsed.data,
       isFeatured: session ? parsed.data.isFeatured : false,
     };
 
-    const testimonial = await Testimonial.create(testimonialData);
-    return NextResponse.json({ success: true, data: testimonial }, { status: 201 });
+    try {
+      await connectToDatabase();
+      const testimonial = await Testimonial.create(testimonialData);
+      if (testimonial) createdTestimonial = testimonial;
+    } catch (dbErr) {
+      console.warn("[POST_TESTIMONIAL] DB offline, saving local:", dbErr);
+    }
+
+    const localCreated = saveLocalTestimonial(testimonialData);
+    if (!createdTestimonial) {
+      createdTestimonial = localCreated;
+    }
+
+    return NextResponse.json({ success: true, data: createdTestimonial }, { status: 201 });
   } catch (err) {
     return handleApiError(err, "Failed to submit testimonial.");
   }
 }
+

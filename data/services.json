@@ -1,0 +1,21 @@
+[
+  {
+    "_id": "65a000000000000000000001",
+    "title": "Classic Bridal Package",
+    "price": "₹19,500",
+    "tagline": "Essential HD makeover for budget-conscious brides",
+    "description": "High Definition (HD) Foundation Base, Traditional Hair Styling & Flower Draping",
+    "imageUrl": "/images/portfolio/traditional-south-indian-bride.jpg",
+    "category": "bridal_package",
+    "updatedAt": "2026-08-21T04:13:32.432Z"
+  },
+  {
+    "_id": "65a000000000000000000002",
+    "title": "Royal HD Makeover Package",
+    "price": "₹25,000",
+    "tagline": "Our most popular 2-event Muhurtham + Reception package",
+    "description": "HD Base for Muhurtham & Reception",
+    "imageUrl": "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
+    "category": "bridal_package"
+  }
+]

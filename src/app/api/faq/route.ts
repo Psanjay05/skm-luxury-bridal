@@ -4,21 +4,7 @@ import connectToDatabase from "@/lib/db";
 import FAQ from "@/models/FAQ";
 import { handleApiError } from "@/lib/errors";
 import { faqSchema } from "@/lib/validations/faq";
-
-const FALLBACK_FAQS = [
-  {
-    _id: "f1",
-    question: "How far in advance should I book my bridal makeover?",
-    answer: "We recommend booking 3 to 6 months prior to your wedding date to secure your date, especially during peak marriage seasons in Tamil Nadu.",
-    order: 1,
-  },
-  {
-    _id: "f2",
-    question: "Do you travel to venues outside Salem?",
-    answer: "Yes! Lead artist Maha Shree and our senior styling team travel across Tamil Nadu, Bangalore, and South India for outstation weddings.",
-    order: 2,
-  },
-];
+import { getLocalFaqs, saveLocalFaq } from "@/lib/local-store";
 
 // GET all non-deleted FAQs sorted by order (Public)
 export async function GET() {
@@ -26,11 +12,14 @@ export async function GET() {
     try {
       await connectToDatabase();
       const faqs = await FAQ.find({ isDeleted: false }).sort({ order: 1, createdAt: -1 }).lean();
-      return NextResponse.json({ success: true, data: faqs });
+      if (faqs && faqs.length > 0) {
+        return NextResponse.json({ success: true, data: faqs });
+      }
     } catch (dbErr) {
-      console.warn("[GET_FAQS] DB offline, returning fallback FAQs:", dbErr);
-      return NextResponse.json({ success: true, data: FALLBACK_FAQS });
+      console.warn("[GET_FAQS] DB offline, loading local FAQs:", dbErr);
     }
+    const localFaqs = getLocalFaqs();
+    return NextResponse.json({ success: true, data: localFaqs });
   } catch (err) {
     return handleApiError(err, "Failed to fetch FAQs.");
   }
@@ -54,11 +43,23 @@ export async function POST(req: Request) {
       );
     }
 
-    await connectToDatabase();
-    const faq = await FAQ.create(parsed.data);
+    let createdFaq = null;
+    try {
+      await connectToDatabase();
+      const faq = await FAQ.create(parsed.data);
+      if (faq) createdFaq = faq;
+    } catch (dbErr) {
+      console.warn("[POST_FAQ] DB offline, saving local:", dbErr);
+    }
 
-    return NextResponse.json({ success: true, data: faq }, { status: 201 });
+    const localCreated = saveLocalFaq(parsed.data);
+    if (!createdFaq) {
+      createdFaq = localCreated;
+    }
+
+    return NextResponse.json({ success: true, data: createdFaq }, { status: 201 });
   } catch (err) {
     return handleApiError(err, "Failed to create FAQ item.");
   }
 }
+

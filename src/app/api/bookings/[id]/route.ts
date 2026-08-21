@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/db";
 import Booking from "@/models/Booking";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
 import { updateBookingStatusSchema } from "@/lib/validations/booking";
+import { updateLocalBooking } from "@/lib/local-store";
 
 // PATCH update booking status (Admin only)
 export async function PATCH(
@@ -30,12 +31,22 @@ export async function PATCH(
       );
     }
 
-    await connectToDatabase();
-    const booking = await Booking.findByIdAndUpdate(
-      id,
-      { status: parsed.data.status },
-      { new: true }
-    );
+    let booking = null;
+    try {
+      await connectToDatabase();
+      booking = await Booking.findByIdAndUpdate(
+        id,
+        { status: parsed.data.status },
+        { new: true }
+      );
+    } catch (dbErr) {
+      console.warn("[PATCH_BOOKING] DB offline, updating local:", dbErr);
+    }
+
+    const localBooking = updateLocalBooking(id, { status: parsed.data.status });
+    if (!booking && localBooking) {
+      booking = localBooking;
+    }
 
     if (!booking) {
       return NextResponse.json({ success: false, error: "Booking not found" }, { status: 404 });
@@ -63,14 +74,25 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: "Invalid booking ID" }, { status: 400 });
     }
 
-    await connectToDatabase();
-    const booking = await Booking.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
-    if (!booking) {
+    let deleted = false;
+    try {
+      await connectToDatabase();
+      const booking = await Booking.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+      if (booking) deleted = true;
+    } catch (dbErr) {
+      console.warn("[DELETE_BOOKING] DB offline, deleting local:", dbErr);
+    }
+
+    const localDeleted = updateLocalBooking(id, { isDeleted: true });
+    if (localDeleted) deleted = true;
+
+    if (!deleted) {
       return NextResponse.json({ success: false, error: "Booking not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: { id: booking._id } });
+    return NextResponse.json({ success: true, data: { id } });
   } catch (err) {
     return handleApiError(err, "Failed to delete booking.");
   }
 }
+

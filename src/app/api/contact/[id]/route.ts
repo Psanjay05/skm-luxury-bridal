@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/db";
 import ContactMessage from "@/models/ContactMessage";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
 import { updateContactStatusSchema } from "@/lib/validations/contact";
+import { updateLocalMessage } from "@/lib/local-store";
 
 // PATCH mark read/unread (Admin only)
 export async function PATCH(
@@ -30,12 +31,22 @@ export async function PATCH(
       );
     }
 
-    await connectToDatabase();
-    const message = await ContactMessage.findByIdAndUpdate(
-      id,
-      { status: parsed.data.status },
-      { new: true }
-    );
+    let message = null;
+    try {
+      await connectToDatabase();
+      message = await ContactMessage.findByIdAndUpdate(
+        id,
+        { status: parsed.data.status },
+        { new: true }
+      );
+    } catch (dbErr) {
+      console.warn("[PATCH_CONTACT] DB offline, updating local:", dbErr);
+    }
+
+    const localMessage = updateLocalMessage(id, { status: parsed.data.status });
+    if (!message && localMessage) {
+      message = localMessage;
+    }
 
     if (!message) {
       return NextResponse.json({ success: false, error: "Message not found" }, { status: 404 });
@@ -63,14 +74,25 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: "Invalid message ID" }, { status: 400 });
     }
 
-    await connectToDatabase();
-    const message = await ContactMessage.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
-    if (!message) {
+    let deleted = false;
+    try {
+      await connectToDatabase();
+      const message = await ContactMessage.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+      if (message) deleted = true;
+    } catch (dbErr) {
+      console.warn("[DELETE_CONTACT] DB offline, deleting local:", dbErr);
+    }
+
+    const localDeleted = updateLocalMessage(id, { isDeleted: true });
+    if (localDeleted) deleted = true;
+
+    if (!deleted) {
       return NextResponse.json({ success: false, error: "Message not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: { id: message._id } });
+    return NextResponse.json({ success: true, data: { id } });
   } catch (err) {
     return handleApiError(err, "Failed to delete message.");
   }
 }
+

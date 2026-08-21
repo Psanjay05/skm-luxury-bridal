@@ -4,75 +4,10 @@ import connectToDatabase from "@/lib/db";
 import Gallery from "@/models/Gallery";
 import { handleApiError } from "@/lib/errors";
 import { gallerySchema } from "@/lib/validations/gallery";
+import { getLocalGallery, saveLocalGallery } from "@/lib/local-store";
 
-export const INITIAL_GALLERY_ITEMS = [
-  {
-    _id: "65b000000000000000000001",
-    imageUrl: "/images/portfolio/before-after-hd-makeover.jpg",
-    altText: "HD Bridal Makeover Transformation by Maha Shree",
-    category: "Before & After",
-  },
-  {
-    _id: "65b000000000000000000002",
-    imageUrl: "/images/portfolio/traditional-south-indian-bride.jpg",
-    altText: "Outdoor Traditional South Indian Bride Look",
-    category: "Bridal",
-  },
-  {
-    _id: "65b000000000000000000003",
-    imageUrl: "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
-    altText: "Royal Pink Silk Bridal Makeup & Antique Gold",
-    category: "Bridal",
-  },
-  {
-    _id: "65b000000000000000000004",
-    imageUrl: "/images/portfolio/full-bridal-pose-silk-saree.jpg",
-    altText: "Pre-Pleated Silk Saree & Temple Belt Pose",
-    category: "Reception",
-  },
-  {
-    _id: "65b000000000000000000005",
-    imageUrl: "/images/portfolio/bridal-close-up-portrait.jpg",
-    altText: "Glowing HD Bridal Portrait & Soft Hairdo by Maha Shree",
-    category: "Hairstyle",
-  },
-  {
-    _id: "65b000000000000000000006",
-    imageUrl: "/images/jewellery/antique-bridal-complete-set.jpg",
-    altText: "Royal Antique Temple Gold Grand Set Styling",
-    category: "Jewellery",
-  },
-  {
-    _id: "65b000000000000000000007",
-    imageUrl: "/images/jewellery/lakshmi-haram-full-set.jpg",
-    altText: "Lakshmi Haram Full Bridal Jewellery Set",
-    category: "Jewellery",
-  },
-  {
-    _id: "65b000000000000000000008",
-    imageUrl: "/images/jewellery/peacock-antique-bridal-set.jpg",
-    altText: "Peacock Motif Antique Bridal Set & Armlet",
-    category: "Jewellery",
-  },
-  {
-    _id: "65b000000000000000000009",
-    imageUrl: "/images/jewellery/bride-wearing-jewellery.jpg",
-    altText: "Engagement Soft Glam & Blue Silk Saree Styling",
-    category: "Engagement",
-  },
-  {
-    _id: "65b000000000000000000010",
-    imageUrl: "/images/portfolio/before-after-hd-makeover.jpg",
-    altText: "Intricate Bridal Mehendi & Henna Artistry",
-    category: "Mehendi",
-  },
-  {
-    _id: "65b000000000000000000011",
-    imageUrl: "/images/portfolio/bridal-close-up-portrait.jpg",
-    altText: "Party Guest & Mother-of-the-Bride Elegant Makeover",
-    category: "Guest",
-  },
-];
+import { INITIAL_GALLERY_ITEMS } from "@/lib/initial-data";
+export { INITIAL_GALLERY_ITEMS };
 
 // GET all non-deleted gallery images (Public, filterable by category)
 export async function GET(req: Request) {
@@ -82,7 +17,6 @@ export async function GET(req: Request) {
 
     try {
       await connectToDatabase();
-
       // Auto-seed if database is active but gallery collection is empty
       const count = await Gallery.countDocuments({ isDeleted: false });
       if (count === 0) {
@@ -97,22 +31,19 @@ export async function GET(req: Request) {
       }
 
       const images = await Gallery.find(filter).sort({ createdAt: -1 }).lean();
-      return NextResponse.json({ success: true, data: images });
+      if (images && images.length > 0) {
+        return NextResponse.json({ success: true, data: images });
+      }
     } catch (dbErr: unknown) {
       const dbErrorMessage = dbErr instanceof Error ? dbErr.message : String(dbErr);
-      console.warn("[GET_GALLERY] MongoDB connection unavailable, serving fallback gallery items:", dbErrorMessage);
-
-      const filtered = category && category !== "All"
-        ? INITIAL_GALLERY_ITEMS.filter((item) => item.category === category)
-        : INITIAL_GALLERY_ITEMS;
-
-      return NextResponse.json({
-        success: true,
-        data: filtered,
-        fallback: true,
-        warning: `Database unavailable (${dbErrorMessage}). Showing offline portfolio.`,
-      });
+      console.warn("[GET_GALLERY] MongoDB connection unavailable, serving local gallery items:", dbErrorMessage);
     }
+
+    const localGallery = getLocalGallery(category || undefined);
+    return NextResponse.json({
+      success: true,
+      data: localGallery,
+    });
   } catch (err) {
     return handleApiError(err, "Failed to fetch gallery images.");
   }
@@ -140,11 +71,23 @@ export async function POST(req: Request) {
       );
     }
 
-    await connectToDatabase();
-    const item = await Gallery.create(parsed.data);
+    let createdItem = null;
+    try {
+      await connectToDatabase();
+      const item = await Gallery.create(parsed.data);
+      if (item) createdItem = item;
+    } catch (dbErr) {
+      console.warn("[POST_GALLERY] DB offline, saving local:", dbErr);
+    }
 
-    return NextResponse.json({ success: true, data: item }, { status: 201 });
+    const localCreated = saveLocalGallery(parsed.data as any);
+    if (!createdItem) {
+      createdItem = localCreated;
+    }
+
+    return NextResponse.json({ success: true, data: createdItem }, { status: 201 });
   } catch (err) {
     return handleApiError(err, "Failed to create gallery item.");
   }
 }
+
