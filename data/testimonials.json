@@ -1,0 +1,26 @@
+[
+  {
+    "_id": "65c000000000000000000001",
+    "customerName": "Priya & Karthik",
+    "review": "Maha Shree ma'am created the absolute bridal look of my dreams! The HD makeup lasted all day through heat and tears without cracking or getting shiny.",
+    "rating": 5,
+    "isFeatured": true,
+    "isDeleted": false
+  },
+  {
+    "_id": "65c000000000000000000002",
+    "customerName": "Ananya R.",
+    "review": "The saree draping precision and hair styling for my Muhurtham were flawless. Every relative complimented my look. SKM is the best in Salem!",
+    "rating": 5,
+    "isFeatured": true,
+    "isDeleted": false
+  },
+  {
+    "_id": "65c000000000000000000003",
+    "customerName": "Deepika S.",
+    "review": "I took the Royal Airbrush Bridal Package. Truly felt like royalty on my reception night! Highly recommend Maha Shree for all brides.",
+    "rating": 5,
+    "isFeatured": true,
+    "isDeleted": false
+  }
+]

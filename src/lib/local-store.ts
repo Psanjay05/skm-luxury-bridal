@@ -5,6 +5,8 @@ import {
   INITIAL_TESTIMONIALS,
   INITIAL_GALLERY_ITEMS,
   INITIAL_FAQS,
+  INITIAL_BOOKINGS,
+  INITIAL_MESSAGES,
 } from "@/lib/initial-data";
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -387,12 +389,12 @@ export interface BookingRecord {
 }
 
 export function getLocalBookings(): BookingRecord[] {
-  const all = readJsonFile<BookingRecord[]>("bookings.json", []);
+  const all = readJsonFile<BookingRecord[]>("bookings.json", INITIAL_BOOKINGS as BookingRecord[]);
   return all.filter((b) => !b.isDeleted);
 }
 
 export function saveLocalBooking(data: Omit<BookingRecord, "_id">): BookingRecord {
-  const all = readJsonFile<BookingRecord[]>("bookings.json", []);
+  const all = readJsonFile<BookingRecord[]>("bookings.json", INITIAL_BOOKINGS as BookingRecord[]);
   const now = new Date().toISOString();
   const record: BookingRecord = {
     ...data,
@@ -407,7 +409,7 @@ export function saveLocalBooking(data: Omit<BookingRecord, "_id">): BookingRecor
 }
 
 export function updateLocalBooking(id: string, data: Partial<BookingRecord>): BookingRecord | null {
-  const all = readJsonFile<BookingRecord[]>("bookings.json", []);
+  const all = readJsonFile<BookingRecord[]>("bookings.json", INITIAL_BOOKINGS as BookingRecord[]);
   const index = all.findIndex((b) => b._id === id || b.bookingReference === id);
   const now = new Date().toISOString();
 
@@ -434,12 +436,12 @@ export interface MessageRecord {
 }
 
 export function getLocalMessages(): MessageRecord[] {
-  const all = readJsonFile<MessageRecord[]>("messages.json", []);
+  const all = readJsonFile<MessageRecord[]>("messages.json", INITIAL_MESSAGES as MessageRecord[]);
   return all.filter((m) => !m.isDeleted);
 }
 
 export function saveLocalMessage(data: Omit<MessageRecord, "_id">): MessageRecord {
-  const all = readJsonFile<MessageRecord[]>("messages.json", []);
+  const all = readJsonFile<MessageRecord[]>("messages.json", INITIAL_MESSAGES as MessageRecord[]);
   const now = new Date().toISOString();
   const record: MessageRecord = {
     ...data,
@@ -454,7 +456,7 @@ export function saveLocalMessage(data: Omit<MessageRecord, "_id">): MessageRecor
 }
 
 export function updateLocalMessage(id: string, data: Partial<MessageRecord>): MessageRecord | null {
-  const all = readJsonFile<MessageRecord[]>("messages.json", []);
+  const all = readJsonFile<MessageRecord[]>("messages.json", INITIAL_MESSAGES as MessageRecord[]);
   const index = all.findIndex((m) => m._id === id);
   const now = new Date().toISOString();
 

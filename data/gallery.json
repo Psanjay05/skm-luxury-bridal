@@ -1,0 +1,74 @@
+[
+  {
+    "_id": "65b000000000000000000001",
+    "imageUrl": "/images/portfolio/before-after-hd-makeover.jpg",
+    "altText": "HD Bridal Makeover Transformation by Maha Shree",
+    "category": "Before & After"
+  },
+  {
+    "_id": "65b000000000000000000002",
+    "imageUrl": "/images/portfolio/traditional-south-indian-bride.jpg",
+    "altText": "Outdoor Traditional South Indian Bride Look",
+    "category": "Bridal"
+  },
+  {
+    "_id": "65b000000000000000000003",
+    "imageUrl": "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
+    "altText": "Royal Pink Silk Bridal Makeup & Antique Gold",
+    "category": "Bridal"
+  },
+  {
+    "_id": "65b000000000000000000004",
+    "imageUrl": "/images/portfolio/full-bridal-pose-silk-saree.jpg",
+    "altText": "Pre-Pleated Silk Saree & Temple Belt Pose",
+    "category": "Reception"
+  },
+  {
+    "_id": "65b000000000000000000005",
+    "imageUrl": "/images/portfolio/bridal-close-up-portrait.jpg",
+    "altText": "Glowing HD Bridal Portrait & Soft Hairdo by Maha Shree",
+    "category": "Hairstyle"
+  },
+  {
+    "_id": "65b000000000000000000006",
+    "imageUrl": "/images/jewellery/antique-bridal-complete-set.jpg",
+    "altText": "Royal Antique Temple Gold Grand Set Styling",
+    "category": "Jewellery"
+  },
+  {
+    "_id": "65b000000000000000000007",
+    "imageUrl": "/images/jewellery/lakshmi-haram-full-set.jpg",
+    "altText": "Lakshmi Haram Full Bridal Jewellery Set",
+    "category": "Jewellery"
+  },
+  {
+    "_id": "65b000000000000000000008",
+    "imageUrl": "/images/jewellery/peacock-antique-bridal-set.jpg",
+    "altText": "Peacock Motif Antique Bridal Set & Armlet",
+    "category": "Jewellery"
+  },
+  {
+    "_id": "65b000000000000000000009",
+    "imageUrl": "/images/jewellery/bride-wearing-jewellery.jpg",
+    "altText": "Engagement Soft Glam & Blue Silk Saree Styling",
+    "category": "Jewellery"
+  },
+  {
+    "_id": "65b000000000000000000010",
+    "imageUrl": "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
+    "altText": "Muhurtham Saree Box Pleating & Fresh Gajra Jada",
+    "category": "Hairstyle"
+  },
+  {
+    "_id": "65b000000000000000000011",
+    "imageUrl": "/images/portfolio/traditional-south-indian-bride.jpg",
+    "altText": "Classic Red Muhurtham Makeover with Flower Jada",
+    "category": "Bridal"
+  },
+  {
+    "_id": "65b000000000000000000012",
+    "imageUrl": "/images/portfolio/before-after-hd-makeover.jpg",
+    "altText": "Flawless HD Base & Eye Artistry Transformation",
+    "category": "Before & After"
+  }
+]
