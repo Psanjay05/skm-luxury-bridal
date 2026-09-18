@@ -17,8 +17,19 @@ export function sanitizePriceInput(input: string | number): string {
     return "Contact Us";
   }
 
+  const isFrom = lower.startsWith("from");
+  const cleanStr = isFrom ? lower.replace(/^from\s*/i, "").trim() : lower;
+
+  // Support 'k' or 'K' notation (e.g. "18k" -> 18000, "2.5k" -> 2500, "From 25k" -> "From ₹25,000")
+  const kMatch = cleanStr.match(/^([0-9]+(?:\.[0-9]+)?)\s*k$/i);
+  if (kMatch) {
+    const kVal = Math.round(parseFloat(kMatch[1]) * 1000);
+    const formatted = formatRupees(kVal);
+    return isFrom ? `From ${formatted}` : formatted;
+  }
+
   // Extract digits
-  const digits = str.replace(/[^0-9]/g, "");
+  const digits = cleanStr.replace(/[^0-9]/g, "");
   if (!digits) {
     return str;
   }
@@ -26,7 +37,6 @@ export function sanitizePriceInput(input: string | number): string {
   const num = Number(digits);
   if (isNaN(num)) return str;
 
-  const isFrom = lower.startsWith("from");
   const formatted = formatRupees(num);
 
   return isFrom ? `From ${formatted}` : formatted;
