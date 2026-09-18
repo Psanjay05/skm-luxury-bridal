@@ -132,9 +132,10 @@ export async function PATCH(req: Request) {
       console.warn("[PATCH_ADMIN_SERVICES] DB offline, saving local:", dbErr);
     }
 
-    let localService = null;
-    if (!service) {
-      localService = updateLocalService(id, updateData);
+    // Always synchronize with local store
+    const localService = updateLocalService(id, updateData);
+    if (!service && localService) {
+      service = localService;
     }
     if (!service && !localService) {
       return NextResponse.json({ success: false, error: "Service not found" }, { status: 404 });

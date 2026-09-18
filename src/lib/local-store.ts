@@ -9,41 +9,82 @@ import {
   INITIAL_MESSAGES,
 } from "@/lib/initial-data";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const BASE_DATA_DIR = path.join(process.cwd(), "data");
+const WRITABLE_DATA_DIR = IS_SERVERLESS ? path.join("/tmp", "skm-data") : BASE_DATA_DIR;
 
-function ensureDirectoryExists() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+// In-memory cache across serverless requests in same container instance
+const memoryCache: Record<string, unknown> = {};
+
+function ensureDirectoryExists(dirPath: string) {
+  if (!fs.existsSync(dirPath)) {
+    try {
+      fs.mkdirSync(dirPath, { recursive: true });
+    } catch (e) {
+      console.warn(`[LOCAL_STORE] Could not create directory ${dirPath}:`, e);
+    }
   }
 }
 
 function readJsonFile<T>(filename: string, defaultData: T): T {
-  ensureDirectoryExists();
-  const filePath = path.join(DATA_DIR, filename);
-  if (!fs.existsSync(filePath)) {
-    try {
-      fs.writeFileSync(filePath, JSON.stringify(defaultData, null, 2), "utf8");
-    } catch (e) {
-      console.warn(`[LOCAL_STORE] Failed to write initial ${filename}:`, e);
+  // 1. Check in-memory cache first
+  if (memoryCache[filename]) {
+    return memoryCache[filename] as T;
+  }
+
+  // 2. In serverless, check writable /tmp directory
+  if (IS_SERVERLESS) {
+    const tmpFilePath = path.join(WRITABLE_DATA_DIR, filename);
+    if (fs.existsSync(tmpFilePath)) {
+      try {
+        const raw = fs.readFileSync(tmpFilePath, "utf8");
+        const parsed = JSON.parse(raw) as T;
+        memoryCache[filename] = parsed;
+        return parsed;
+      } catch (e) {
+        console.warn(`[LOCAL_STORE] Error reading /tmp/${filename}:`, e);
+      }
     }
-    return defaultData;
   }
-  try {
-    const raw = fs.readFileSync(filePath, "utf8");
-    return JSON.parse(raw) as T;
-  } catch (e) {
-    console.error(`[LOCAL_STORE] Failed to read ${filename}, returning default:`, e);
-    return defaultData;
+
+  // 3. Check bundled data directory
+  const baseFilePath = path.join(BASE_DATA_DIR, filename);
+  if (fs.existsSync(baseFilePath)) {
+    try {
+      const raw = fs.readFileSync(baseFilePath, "utf8");
+      const parsed = JSON.parse(raw) as T;
+      memoryCache[filename] = parsed;
+      return parsed;
+    } catch (e) {
+      console.warn(`[LOCAL_STORE] Error reading base ${filename}:`, e);
+    }
   }
+
+  // 4. Fallback to default initial dataset
+  memoryCache[filename] = defaultData;
+  return defaultData;
 }
 
 function writeJsonFile<T>(filename: string, data: T): void {
-  ensureDirectoryExists();
-  const filePath = path.join(DATA_DIR, filename);
+  // Update in-memory cache immediately
+  memoryCache[filename] = data;
+
+  // Try writing to target directory
   try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
+    ensureDirectoryExists(WRITABLE_DATA_DIR);
+    const targetPath = path.join(WRITABLE_DATA_DIR, filename);
+    fs.writeFileSync(targetPath, JSON.stringify(data, null, 2), "utf8");
   } catch (e) {
-    console.error(`[LOCAL_STORE] Failed to write ${filename}:`, e);
+    console.error(`[LOCAL_STORE] Failed to write ${filename} to ${WRITABLE_DATA_DIR}:`, e);
+    if (!IS_SERVERLESS) {
+      try {
+        const fallbackDir = path.join("/tmp", "skm-data");
+        ensureDirectoryExists(fallbackDir);
+        fs.writeFileSync(path.join(fallbackDir, filename), JSON.stringify(data, null, 2), "utf8");
+      } catch (err2) {
+        // silent
+      }
+    }
   }
 }
 

@@ -115,23 +115,20 @@ export default function ServicesAdminPage() {
       const json = await res.json();
 
       if (res.ok && json.success) {
-        // Optimistic instant UI update with sanitized price
+        const savedItem = json.data || { ...form, price: sanitizedPrice, _id: editingId || undefined };
         if (editingId) {
           setServices((prev) =>
-            prev.map((item) => (item._id === editingId ? { ...item, ...form, price: sanitizedPrice } : item))
+            prev.map((item) => (item._id === editingId ? { ...item, ...savedItem, price: sanitizedPrice } : item))
           );
           setActionSuccess(`Updated "${form.title}" price to ${sanitizedPrice}. Live on website!`);
         } else {
-          if (json.data) {
-            setServices((prev) => [json.data, ...prev]);
-          }
+          setServices((prev) => [savedItem, ...prev]);
           setActionSuccess(`Added "${form.title}" with price ${sanitizedPrice}. Live on website!`);
         }
 
         setOpen(false);
         setForm(EMPTY);
         setEditingId(null);
-        fetchServices();
       } else {
         const errorMsg = json.details
           ? `${json.error || "Failed to save service price"} (${typeof json.details === "string" ? json.details : JSON.stringify(json.details)})`
