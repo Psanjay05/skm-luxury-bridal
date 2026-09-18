@@ -43,9 +43,20 @@ export async function GET(_req: Request) {
 
     try {
       await connectToDatabase();
+
+      // First-time Atlas connection: Auto-seed initial services if DB collection is empty
+      const count = await Service.countDocuments({ isDeleted: false });
+      if (count === 0) {
+        console.log("[GET_ADMIN_SERVICES] First-time Atlas setup: Seeding services from local data...");
+        const localServices = getLocalServices();
+        if (localServices && localServices.length > 0) {
+          await Service.insertMany(localServices);
+        }
+      }
+
       const services = await Service.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
       return NextResponse.json(
-        { success: true, data: services },
+        { success: true, data: services, dbConnected: true },
         { headers: { "Cache-Control": "no-store, max-age=0" } }
       );
     } catch (dbErr) {
@@ -53,7 +64,7 @@ export async function GET(_req: Request) {
     }
     const localServices = getLocalServices();
     return NextResponse.json(
-      { success: true, data: localServices },
+      { success: true, data: localServices, dbConnected: false },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (err) {

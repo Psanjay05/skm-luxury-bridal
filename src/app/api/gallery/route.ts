@@ -22,6 +22,16 @@ export async function GET(req: Request) {
     try {
       await connectToDatabase();
 
+      // First-time Atlas connection: Auto-seed gallery if collection is empty
+      const count = await Gallery.countDocuments({ isDeleted: false });
+      if (count === 0) {
+        const localGallery = getLocalGallery();
+        if (localGallery && localGallery.length > 0) {
+          console.log("[GET_GALLERY] First-time Atlas setup: Seeding gallery...");
+          await Gallery.insertMany(localGallery);
+        }
+      }
+
       const filter: Record<string, unknown> = { isDeleted: false };
       if (category && category !== "All") {
         filter.category = category;

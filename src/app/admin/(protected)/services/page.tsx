@@ -54,6 +54,7 @@ export default function ServicesAdminPage() {
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [dbConnected, setDbConnected] = useState<boolean | null>(null);
 
   const fetchServices = async () => {
     setLoading(true);
@@ -66,6 +67,7 @@ export default function ServicesAdminPage() {
       const json = await res.json();
       if (res.ok && json.success) {
         setServices(json.data ?? []);
+        setDbConnected(Boolean(json.dbConnected));
       } else {
         const errorMsg = json.details
           ? `${json.error || "Failed to fetch services"} — ${typeof json.details === "string" ? json.details : JSON.stringify(json.details)}`
@@ -186,7 +188,19 @@ export default function ServicesAdminPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-3xl font-bold text-foreground">Services & Package Pricing</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-heading text-3xl font-bold text-foreground">Services & Package Pricing</h1>
+            {dbConnected === true && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Cloud DB Live
+              </span>
+            )}
+            {dbConnected === false && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30" title="Connect MongoDB Atlas in Vercel settings for permanent cloud storage">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Local Store Mode
+              </span>
+            )}
+          </div>
           <p className="text-muted-foreground text-sm mt-1">
             Update pricing, descriptions, and packages. Changes sync live on the website immediately.
           </p>

@@ -22,6 +22,16 @@ export async function GET(req: Request) {
     try {
       await connectToDatabase();
 
+      // First-time Atlas connection: Auto-seed initial services if DB collection is empty
+      const count = await Service.countDocuments({ isDeleted: false });
+      if (count === 0) {
+        console.log("[GET_SERVICES] First-time Atlas setup: Seeding services from local data...");
+        const localServices = getLocalServices();
+        if (localServices && localServices.length > 0) {
+          await Service.insertMany(localServices);
+        }
+      }
+
       const filter: Record<string, unknown> = { isDeleted: false };
       if (category && category !== "all") {
         filter.category = category;

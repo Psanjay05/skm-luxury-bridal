@@ -25,6 +25,16 @@ export async function GET(req: Request) {
     try {
       await connectToDatabase();
 
+      // First-time Atlas connection: Auto-seed testimonials if collection is empty
+      const count = await Testimonial.countDocuments({ isDeleted: false });
+      if (count === 0) {
+        const localTestimonials = getLocalTestimonials(false);
+        if (localTestimonials && localTestimonials.length > 0) {
+          console.log("[GET_TESTIMONIALS] First-time Atlas setup: Seeding testimonials...");
+          await Testimonial.insertMany(localTestimonials);
+        }
+      }
+
       const filter: Record<string, unknown> = { isDeleted: false };
       if (shouldFilterFeatured) {
         filter.isFeatured = true;

@@ -16,6 +16,16 @@ export async function GET() {
     try {
       await connectToDatabase();
 
+      // First-time Atlas connection: Auto-seed FAQs if collection is empty
+      const count = await FAQ.countDocuments({ isDeleted: false });
+      if (count === 0) {
+        const localFaqs = getLocalFaqs();
+        if (localFaqs && localFaqs.length > 0) {
+          console.log("[GET_FAQS] First-time Atlas setup: Seeding FAQs...");
+          await FAQ.insertMany(localFaqs);
+        }
+      }
+
       // DB is the single source of truth when reachable
       const dbFaqs = await FAQ.find({ isDeleted: false }).sort({ order: 1, createdAt: -1 }).lean();
       return NextResponse.json(
