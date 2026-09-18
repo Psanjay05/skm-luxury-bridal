@@ -71,7 +71,10 @@ export default function TestimonialsPage() {
   useEffect(() => {
     async function fetchTestimonials() {
       try {
-        const res = await fetch("/api/testimonials");
+        const res = await fetch("/api/testimonials", {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache, no-store" },
+        });
         const json = await res.json();
         if (res.ok && json.success && json.data && json.data.length > 0) {
           setTestimonials(json.data);

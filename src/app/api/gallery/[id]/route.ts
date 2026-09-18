@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import Gallery from "@/models/Gallery";
@@ -37,30 +38,23 @@ export async function PATCH(
     try {
       await connectToDatabase();
       item = await Gallery.findByIdAndUpdate(id, parsed.data, { new: true });
-
-      if (!item) {
-        const initialMatch = INITIAL_GALLERY_ITEMS.find((g) => g._id === id);
-        if (initialMatch) {
-          const { _id: _, ...initialData } = initialMatch;
-          item = await Gallery.create({
-            _id: id,
-            ...initialData,
-            ...parsed.data,
-          });
-        }
-      }
     } catch (dbErr) {
       console.warn("[PATCH_GALLERY] DB offline, updating local:", dbErr);
     }
 
-    const localUpdated = updateLocalGallery(id, parsed.data);
-    if (!item && localUpdated) {
-      item = localUpdated;
+    if (!item) {
+      const localUpdated = updateLocalGallery(id, parsed.data);
+      if (localUpdated) {
+        item = localUpdated;
+      }
     }
 
     if (!item) {
       return NextResponse.json({ success: false, error: "Gallery item not found" }, { status: 404 });
     }
+
+    revalidatePath("/gallery");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, data: item });
   } catch (err) {
@@ -93,12 +87,17 @@ export async function DELETE(
       console.warn("[DELETE_GALLERY] DB offline, deleting local:", dbErr);
     }
 
-    const localDeleted = deleteLocalGallery(id);
-    if (localDeleted) deleted = true;
+    if (!deleted) {
+      const localDeleted = deleteLocalGallery(id);
+      if (localDeleted) deleted = true;
+    }
 
     if (!deleted) {
       return NextResponse.json({ success: false, error: "Gallery item not found" }, { status: 404 });
     }
+
+    revalidatePath("/gallery");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, data: { id } });
   } catch (err) {

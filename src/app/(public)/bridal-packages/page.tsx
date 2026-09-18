@@ -79,16 +79,48 @@ export default function BridalPackagesPage() {
         });
         const json = await res.json();
         if (res.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
-          const dbServices: Array<{ title: string; price: string; tagline?: string }> = json.data;
+          const dbServices: Array<{
+            _id?: string;
+            title: string;
+            price: string;
+            tagline?: string;
+            description?: string;
+            category?: string;
+            features?: string[];
+            ctaText?: string;
+          }> = json.data;
 
-          setPackages((prev) =>
-            prev.map((pkg) => {
-              const match = dbServices.find(
-                (s) => s.title.toLowerCase().trim() === pkg.name.toLowerCase().trim()
-              );
-              return match ? { ...pkg, price: match.price, tagline: match.tagline || pkg.tagline } : pkg;
-            })
+          const bridalPackageServices = dbServices.filter(
+            (s) => s.category === "bridal_package" || s.title.toLowerCase().includes("package")
           );
+
+          if (bridalPackageServices.length > 0) {
+            const mappedPackages: PackageTier[] = bridalPackageServices.map((s, idx) => ({
+              name: s.title,
+              price: s.price,
+              tagline: s.tagline || s.description || "Premium Bridal Package",
+              featured: idx === 1 || s.title.toLowerCase().includes("royal") || s.title.toLowerCase().includes("hd"),
+              features: s.features && s.features.length > 0 ? s.features : (
+                DEFAULT_PACKAGES.find((d) => d.name.toLowerCase() === s.title.toLowerCase())?.features || [
+                  "High Definition (HD) Foundation Base",
+                  "Traditional / Modern Hair Styling",
+                  "Saree Box Pleating & Draping",
+                  "Studio Consultation & Trial Session",
+                ]
+              ),
+              cta: s.ctaText || `Book ${s.title}`,
+            }));
+            setPackages(mappedPackages);
+          } else {
+            setPackages((prev) =>
+              prev.map((pkg) => {
+                const match = dbServices.find(
+                  (s) => s.title.toLowerCase().trim() === pkg.name.toLowerCase().trim()
+                );
+                return match ? { ...pkg, price: match.price, tagline: match.tagline || pkg.tagline } : pkg;
+              })
+            );
+          }
         }
       } catch (err) {
         console.warn("[BRIDAL_PACKAGES] Using fallback packages:", err);

@@ -47,7 +47,10 @@ export default function FAQPage() {
   useEffect(() => {
     async function fetchFaqs() {
       try {
-        const res = await fetch("/api/faq");
+        const res = await fetch("/api/faq", {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache, no-store" },
+        });
         const json = await res.json();
         if (res.ok && json.success && json.data && json.data.length > 0) {
           setFaqs(json.data);

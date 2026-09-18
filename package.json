@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "node scripts/seed.mjs",
+    "migrate": "node scripts/safe-migrate.mjs",
+    "test:migration": "node scripts/test-migration-guard.mjs",
     "test:qa": "node scripts/test-e2e-suite.mjs"
   },
   "dependencies": {

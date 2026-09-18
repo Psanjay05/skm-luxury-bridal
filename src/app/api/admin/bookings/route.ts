@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import Booking from "@/models/Booking";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
+import { getLocalBookings, updateLocalBooking } from "@/lib/local-store";
 import { z } from "zod";
 
 const updateBookingSchema = z.object({
@@ -45,7 +47,6 @@ export async function GET(req: Request) {
     }
 
     // Fallback to local store
-    const { getLocalBookings } = await import("@/lib/local-store");
     let localBookings = getLocalBookings();
     if (status && status !== "all") {
       localBookings = localBookings.filter((b) => b.status === status);
@@ -65,29 +66,43 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const parsed = updateBookingSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
-    await connectToDatabase();
-    const booking = await Booking.findByIdAndUpdate(
-      parsed.data.id,
-      { status: parsed.data.status },
-      { new: true }
-    );
-
-    if (!booking) {
-      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    let booking = null;
+    try {
+      await connectToDatabase();
+      booking = await Booking.findByIdAndUpdate(
+        parsed.data.id,
+        { status: parsed.data.status },
+        { new: true }
+      );
+    } catch (dbErr) {
+      console.warn("[PATCH_ADMIN_BOOKINGS] DB offline, updating local:", dbErr);
     }
 
-    return NextResponse.json(booking);
+    if (!booking) {
+      const localBooking = updateLocalBooking(parsed.data.id, { status: parsed.data.status });
+      if (localBooking) {
+        booking = localBooking;
+      }
+    }
+
+    if (!booking) {
+      return NextResponse.json({ success: false, error: "Booking not found" }, { status: 404 });
+    }
+
+    revalidatePath("/admin/bookings");
+
+    return NextResponse.json({ success: true, data: booking });
   } catch (err) {
     return handleApiError(err, "Failed to update booking status.");
   }
@@ -97,24 +112,38 @@ export async function PATCH(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const parsed = deleteBookingSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
-    await connectToDatabase();
-    const booking = await Booking.findByIdAndUpdate(parsed.data.id, { isDeleted: true }, { new: true });
-    if (!booking) {
-      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    let deleted = false;
+    try {
+      await connectToDatabase();
+      const booking = await Booking.findByIdAndUpdate(parsed.data.id, { isDeleted: true }, { new: true });
+      if (booking) deleted = true;
+    } catch (dbErr) {
+      console.warn("[DELETE_ADMIN_BOOKINGS] DB offline, deleting local:", dbErr);
     }
 
-    return NextResponse.json({ success: true });
+    if (!deleted) {
+      const localDeleted = updateLocalBooking(parsed.data.id, { isDeleted: true });
+      if (localDeleted) deleted = true;
+    }
+
+    if (!deleted) {
+      return NextResponse.json({ success: false, error: "Booking not found" }, { status: 404 });
+    }
+
+    revalidatePath("/admin/bookings");
+
+    return NextResponse.json({ success: true, data: { id: parsed.data.id } });
   } catch (err) {
     return handleApiError(err, "Failed to delete booking.");
   }

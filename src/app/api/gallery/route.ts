@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import Gallery from "@/models/Gallery";
@@ -21,25 +22,12 @@ export async function GET(req: Request) {
     try {
       await connectToDatabase();
 
-      // Auto-seed if empty
-      const count = await Gallery.countDocuments({ isDeleted: false });
-      if (count === 0) {
-        const localForSeed = getLocalGallery(category || undefined);
-        if (localForSeed.length > 0) {
-          console.log("[GET_GALLERY] Seeding initial portfolio gallery images...");
-          const seedPayload = localForSeed.map(({ _id, ...item }) => item);
-          await Gallery.insertMany(seedPayload);
-        }
-      }
-
       const filter: Record<string, unknown> = { isDeleted: false };
       if (category && category !== "All") {
         filter.category = category;
       }
 
-      // SKM-004 FIX: DB is the single source of truth when reachable.
-      // Gallery images uploaded via admin go to MongoDB/Cloudinary.
-      // Returning local JSON first hides admin-uploaded images.
+      // DB is the single source of truth when reachable.
       const dbImages = await Gallery.find(filter).sort({ createdAt: -1 }).lean();
       return NextResponse.json(
         { success: true, data: dbImages },
@@ -95,10 +83,12 @@ export async function POST(req: Request) {
       console.warn("[POST_GALLERY] DB offline, saving local:", dbErr);
     }
 
-    const localCreated = saveLocalGallery(parsed.data as any);
     if (!createdItem) {
-      createdItem = localCreated;
+      createdItem = saveLocalGallery(parsed.data as any);
     }
+
+    revalidatePath("/gallery");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, data: createdItem }, { status: 201 });
   } catch (err) {

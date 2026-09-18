@@ -1,17 +1,12 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import GalleryImage from "@/models/Gallery";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
+import { gallerySchema } from "@/lib/validations/gallery";
+import { getLocalGallery, saveLocalGallery, deleteLocalGallery } from "@/lib/local-store";
 import { z } from "zod";
-
-const createGallerySchema = z.object({
-  title: z.string().trim().min(2).max(100),
-  category: z.enum(["Bridal", "Before & After", "Jewellery", "Saree Draping"]),
-  imageUrl: z.string().url("Invalid image URL"),
-  publicId: z.string().optional(),
-  description: z.string().trim().max(500).optional(),
-});
 
 const deleteGallerySchema = z.object({
   id: z.string().refine(isValidObjectId, { message: "Invalid gallery ID format" }),
@@ -19,40 +14,69 @@ const deleteGallerySchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    // SKM-003 FIX: Admin gallery GET must require authentication
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    await connectToDatabase();
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
-    const filter: Record<string, unknown> = { isDeleted: false };
-    if (category && category !== "All") filter.category = category;
-    const images = await GalleryImage.find(filter).sort({ createdAt: -1 }).lean();
-    return NextResponse.json(images);
+
+    try {
+      await connectToDatabase();
+      const filter: Record<string, unknown> = { isDeleted: false };
+      if (category && category !== "All") filter.category = category;
+      const images = await GalleryImage.find(filter).sort({ createdAt: -1 }).lean();
+      return NextResponse.json(
+        { success: true, data: images },
+        { headers: { "Cache-Control": "no-store, max-age=0" } }
+      );
+    } catch (dbErr) {
+      console.warn("[GET_ADMIN_GALLERY] DB offline, using local store:", dbErr);
+    }
+
+    const localImages = getLocalGallery(category && category !== "All" ? category : undefined);
+    return NextResponse.json(
+      { success: true, data: localImages },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (err) {
     return handleApiError(err, "Failed to fetch gallery images.");
-
   }
 }
 
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const parsed = createGallerySchema.safeParse(body);
+    const parsed = gallerySchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
-    await connectToDatabase();
-    const image = await GalleryImage.create(parsed.data);
-    return NextResponse.json(image, { status: 201 });
+    let image = null;
+    try {
+      await connectToDatabase();
+      image = await GalleryImage.create(parsed.data);
+    } catch (dbErr) {
+      console.warn("[POST_ADMIN_GALLERY] DB offline, saving local:", dbErr);
+    }
+
+    let localImage = null;
+    if (!image) {
+      localImage = saveLocalGallery(parsed.data as any);
+    }
+
+    revalidatePath("/gallery");
+    revalidatePath("/");
+
+    return NextResponse.json(
+      { success: true, data: image || localImage },
+      { status: 201 }
+    );
   } catch (err) {
     return handleApiError(err, "Failed to create gallery item.");
   }
@@ -61,24 +85,39 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const parsed = deleteGallerySchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
-    await connectToDatabase();
-    const image = await GalleryImage.findByIdAndUpdate(parsed.data.id, { isDeleted: true }, { new: true });
-    if (!image) {
-      return NextResponse.json({ error: "Gallery item not found" }, { status: 404 });
+    let deleted = false;
+    try {
+      await connectToDatabase();
+      const image = await GalleryImage.findByIdAndUpdate(parsed.data.id, { isDeleted: true }, { new: true });
+      if (image) deleted = true;
+    } catch (dbErr) {
+      console.warn("[DELETE_ADMIN_GALLERY] DB offline, deleting local:", dbErr);
     }
 
-    return NextResponse.json({ success: true });
+    if (!deleted) {
+      const localDeleted = deleteLocalGallery(parsed.data.id);
+      if (localDeleted) deleted = true;
+    }
+
+    if (!deleted) {
+      return NextResponse.json({ success: false, error: "Gallery item not found" }, { status: 404 });
+    }
+
+    revalidatePath("/gallery");
+    revalidatePath("/");
+
+    return NextResponse.json({ success: true, data: { id: parsed.data.id } });
   } catch (err) {
     return handleApiError(err, "Failed to delete gallery item.");
   }

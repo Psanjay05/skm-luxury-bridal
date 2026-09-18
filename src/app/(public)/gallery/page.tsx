@@ -133,9 +133,12 @@ export default function GalleryPage() {
     async function fetchGallery() {
       try {
         const url = activeCategory === "All" ? "/api/gallery" : `/api/gallery?category=${encodeURIComponent(activeCategory)}`;
-        const res = await fetch(url);
+        const res = await fetch(url, {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache, no-store" },
+        });
         const json = await res.json();
-        if (res.ok && json.success && json.data && json.data.length > 0) {
+        if (res.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
           setItems(json.data);
         } else if (activeCategory === "All") {
           setItems(FALLBACK_ITEMS);

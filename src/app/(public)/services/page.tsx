@@ -66,19 +66,76 @@ export default function ServicesPage() {
         });
         const json = await res.json();
         if (res.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
-          const dbServices: Array<{ title: string; description: string; price: string; category: string }> = json.data;
+          const dbServices: Array<{ _id?: string; title: string; description: string; price: string; category: string; imageUrl?: string }> = json.data;
 
-          setSections((prevSections) =>
-            prevSections.map((sec) => {
-              const updatedItems = sec.items.map((item) => {
-                const match = dbServices.find(
-                  (dbItem) => dbItem.title.toLowerCase().trim() === item.title.toLowerCase().trim()
-                );
-                return match ? { ...item, price: match.price, desc: match.description || item.desc } : item;
-              });
-              return { ...sec, items: updatedItems };
-            })
+          const makeupItems = dbServices.filter((s) => s.category === "makeup" || s.category === "bridal_package");
+          const hairSareeItems = dbServices.filter((s) => s.category === "hairstyle" || s.category === "saree");
+          const enhancementItems = dbServices.filter((s) => s.category === "jewellery" || s.category === "mehendi" || s.category === "other");
+          const customItems = dbServices.filter(
+            (s) => !["makeup", "bridal_package", "hairstyle", "saree", "jewellery", "mehendi", "other"].includes(s.category)
           );
+
+          const liveSections = [];
+
+          if (makeupItems.length > 0) {
+            liveSections.push({
+              category: "Bridal Makeup & Skin Finish",
+              icon: Sparkles,
+              image: makeupItems[0]?.imageUrl || "/images/portfolio/bridal-close-up-portrait.jpg",
+              imageAlt: "HD Bridal Makeover by Maha Shree",
+              items: makeupItems.map((item) => ({
+                title: item.title,
+                desc: item.description,
+                price: item.price,
+              })),
+            });
+          }
+
+          if (hairSareeItems.length > 0) {
+            liveSections.push({
+              category: "Hair Artistry & Saree Draping",
+              icon: Scissors,
+              image: hairSareeItems[0]?.imageUrl || "/images/portfolio/traditional-south-indian-bride.jpg",
+              imageAlt: "Traditional South Indian Bridal Hairstyle",
+              items: hairSareeItems.map((item) => ({
+                title: item.title,
+                desc: item.description,
+                price: item.price,
+              })),
+            });
+          }
+
+          if (enhancementItems.length > 0) {
+            liveSections.push({
+              category: "Enhancements & Rentals",
+              icon: Heart,
+              image: enhancementItems[0]?.imageUrl || "/images/jewellery/antique-bridal-complete-set.jpg",
+              imageAlt: "Antique Temple Gold Jewellery Rental",
+              items: enhancementItems.map((item) => ({
+                title: item.title,
+                desc: item.description,
+                price: item.price,
+              })),
+            });
+          }
+
+          if (customItems.length > 0) {
+            liveSections.push({
+              category: "Custom & Studio Services",
+              icon: Sparkles,
+              image: customItems[0]?.imageUrl || "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
+              imageAlt: "Custom Bridal Service Packages",
+              items: customItems.map((item) => ({
+                title: item.title,
+                desc: item.description,
+                price: item.price,
+              })),
+            });
+          }
+
+          if (liveSections.length > 0) {
+            setSections(liveSections);
+          }
         }
       } catch (err) {
         console.warn("[SERVICES_PAGE] Failed to fetch live prices, using fallback:", err);

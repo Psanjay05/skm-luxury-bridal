@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import FAQ from "@/models/FAQ";
@@ -40,14 +41,19 @@ export async function PATCH(
       console.warn("[PATCH_FAQ] DB offline, saving local:", dbErr);
     }
 
-    const localFaq = updateLocalFaq(id, parsed.data);
-    if (!faq && localFaq) {
-      faq = localFaq;
+    if (!faq) {
+      const localFaq = updateLocalFaq(id, parsed.data);
+      if (localFaq) {
+        faq = localFaq;
+      }
     }
 
     if (!faq) {
       return NextResponse.json({ success: false, error: "FAQ item not found" }, { status: 404 });
     }
+
+    revalidatePath("/faq");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, data: faq });
   } catch (err) {
@@ -80,12 +86,17 @@ export async function DELETE(
       console.warn("[DELETE_FAQ] DB offline, deleting local:", dbErr);
     }
 
-    const localDeleted = deleteLocalFaq(id);
-    if (localDeleted) deleted = true;
+    if (!deleted) {
+      const localDeleted = deleteLocalFaq(id);
+      if (localDeleted) deleted = true;
+    }
 
     if (!deleted) {
       return NextResponse.json({ success: false, error: "FAQ item not found" }, { status: 404 });
     }
+
+    revalidatePath("/faq");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, data: { id } });
   } catch (err) {

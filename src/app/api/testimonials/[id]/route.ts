@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import Testimonial from "@/models/Testimonial";
@@ -35,20 +36,24 @@ export async function PATCH(
     let updatedTestimonial = null;
     try {
       await connectToDatabase();
-      const testimonial = await Testimonial.findByIdAndUpdate(id, parsed.data, { new: true });
-      if (testimonial) updatedTestimonial = testimonial;
+      updatedTestimonial = await Testimonial.findByIdAndUpdate(id, parsed.data, { new: true });
     } catch (dbErr) {
       console.warn("[PATCH_TESTIMONIAL] DB offline, updating local:", dbErr);
     }
 
-    const localUpdated = updateLocalTestimonial(id, parsed.data);
-    if (!updatedTestimonial && localUpdated) {
-      updatedTestimonial = localUpdated;
+    if (!updatedTestimonial) {
+      const localUpdated = updateLocalTestimonial(id, parsed.data);
+      if (localUpdated) {
+        updatedTestimonial = localUpdated;
+      }
     }
 
     if (!updatedTestimonial) {
       return NextResponse.json({ success: false, error: "Testimonial not found" }, { status: 404 });
     }
+
+    revalidatePath("/testimonials");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, data: updatedTestimonial });
   } catch (err) {
@@ -81,12 +86,17 @@ export async function DELETE(
       console.warn("[DELETE_TESTIMONIAL] DB offline, deleting local:", dbErr);
     }
 
-    const localDeleted = deleteLocalTestimonial(id);
-    if (localDeleted) deleted = true;
+    if (!deleted) {
+      const localDeleted = deleteLocalTestimonial(id);
+      if (localDeleted) deleted = true;
+    }
 
     if (!deleted) {
       return NextResponse.json({ success: false, error: "Testimonial not found" }, { status: 404 });
     }
+
+    revalidatePath("/testimonials");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, data: { id } });
   } catch (err) {

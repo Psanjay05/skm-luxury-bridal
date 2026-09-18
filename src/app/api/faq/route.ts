@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import FAQ from "@/models/FAQ";
@@ -14,15 +15,6 @@ export async function GET() {
   try {
     try {
       await connectToDatabase();
-      // Auto-seed initial FAQs if collection is empty
-      const count = await FAQ.countDocuments({ isDeleted: false });
-      if (count === 0) {
-        const localFaqs = getLocalFaqs();
-        if (localFaqs.length > 0) {
-          const seedPayload = localFaqs.map(({ _id: _, ...item }) => item);
-          await FAQ.insertMany(seedPayload);
-        }
-      }
 
       // DB is the single source of truth when reachable
       const dbFaqs = await FAQ.find({ isDeleted: false }).sort({ order: 1, createdAt: -1 }).lean();
@@ -72,10 +64,12 @@ export async function POST(req: Request) {
       console.warn("[POST_FAQ] DB offline, saving local:", dbErr);
     }
 
-    const localCreated = saveLocalFaq(parsed.data);
     if (!createdFaq) {
-      createdFaq = localCreated;
+      createdFaq = saveLocalFaq(parsed.data);
     }
+
+    revalidatePath("/faq");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, data: createdFaq }, { status: 201 });
   } catch (err) {

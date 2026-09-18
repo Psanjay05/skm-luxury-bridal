@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import Testimonial from "@/models/Testimonial";
@@ -18,24 +19,15 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const featuredOnly = searchParams.get("featured") === "true";
+    const session = await auth();
+    const shouldFilterFeatured = !session || featuredOnly;
 
     try {
       await connectToDatabase();
-      const session = await auth();
 
       const filter: Record<string, unknown> = { isDeleted: false };
-      if (!session || featuredOnly) {
+      if (shouldFilterFeatured) {
         filter.isFeatured = true;
-      }
-
-      // Auto-seed initial testimonials if collection is empty
-      const count = await Testimonial.countDocuments({ isDeleted: false });
-      if (count === 0) {
-        const localTestimonials = getLocalTestimonials(featuredOnly);
-        if (localTestimonials.length > 0) {
-          const seedPayload = localTestimonials.map(({ _id: _, ...item }) => item);
-          await Testimonial.insertMany(seedPayload);
-        }
       }
 
       // DB is the single source of truth when reachable
@@ -50,7 +42,7 @@ export async function GET(req: Request) {
     }
 
     // Fallback when MongoDB is unreachable
-    const localTestimonials = getLocalTestimonials(featuredOnly);
+    const localTestimonials = getLocalTestimonials(shouldFilterFeatured);
     return NextResponse.json(
       { success: true, data: localTestimonials },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
@@ -95,10 +87,12 @@ export async function POST(req: Request) {
       console.warn("[POST_TESTIMONIAL] DB offline, saving local:", dbErr);
     }
 
-    const localCreated = saveLocalTestimonial(testimonialData);
     if (!createdTestimonial) {
-      createdTestimonial = localCreated;
+      createdTestimonial = saveLocalTestimonial(testimonialData);
     }
+
+    revalidatePath("/testimonials");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, data: createdTestimonial }, { status: 201 });
   } catch (err) {

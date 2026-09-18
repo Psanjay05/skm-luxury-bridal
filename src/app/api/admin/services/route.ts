@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import Service from "@/models/Service";
@@ -37,15 +38,12 @@ const deleteServiceSchema = z.object({
 
 export async function GET(_req: Request) {
   try {
-    // Auth guard — also enforced at edge by proxy.ts
     const session = await auth();
     if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     try {
       await connectToDatabase();
-      // DB is source of truth when reachable
       const services = await Service.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
-      // P1 FIX: Return {success, data} envelope — admin page checks json.success && json.data
       return NextResponse.json(
         { success: true, data: services },
         { headers: { "Cache-Control": "no-store, max-age=0" } }
@@ -66,13 +64,13 @@ export async function GET(_req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const parsed = createServiceSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
@@ -85,16 +83,27 @@ export async function POST(req: Request) {
       console.warn("[POST_ADMIN_SERVICES] DB offline, saving local:", dbErr);
     }
 
-    const localService = saveLocalService({
-      title: parsed.data.title,
-      description: parsed.data.description,
-      category: parsed.data.category,
-      price: parsed.data.price || "From ₹9,999",
-      imageUrl: parsed.data.imageUrl || "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
-      features: parsed.data.features,
-    });
+    let localService = null;
+    if (!service) {
+      localService = saveLocalService({
+        title: parsed.data.title,
+        description: parsed.data.description,
+        category: parsed.data.category,
+        price: parsed.data.price || "From ₹9,999",
+        imageUrl: parsed.data.imageUrl || "/images/portfolio/bridal-pink-saree-gold-jewellery.jpg",
+        features: parsed.data.features,
+      });
+    }
 
-    return NextResponse.json(service || localService, { status: 201 });
+    revalidatePath("/services");
+    revalidatePath("/bridal-packages");
+    revalidatePath("/booking");
+    revalidatePath("/");
+
+    return NextResponse.json(
+      { success: true, data: service || localService },
+      { status: 201 }
+    );
   } catch (err) {
     return handleApiError(err, "Failed to create service.");
   }
@@ -103,13 +112,13 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const parsed = updateServiceSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
@@ -123,12 +132,20 @@ export async function PATCH(req: Request) {
       console.warn("[PATCH_ADMIN_SERVICES] DB offline, saving local:", dbErr);
     }
 
-    const localService = updateLocalService(id, updateData);
+    let localService = null;
+    if (!service) {
+      localService = updateLocalService(id, updateData);
+    }
     if (!service && !localService) {
-      return NextResponse.json({ error: "Service not found" }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Service not found" }, { status: 404 });
     }
 
-    return NextResponse.json(service || localService);
+    revalidatePath("/services");
+    revalidatePath("/bridal-packages");
+    revalidatePath("/booking");
+    revalidatePath("/");
+
+    return NextResponse.json({ success: true, data: service || localService });
   } catch (err) {
     return handleApiError(err, "Failed to update service.");
   }
@@ -137,13 +154,13 @@ export async function PATCH(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const parsed = deleteServiceSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
@@ -157,14 +174,21 @@ export async function DELETE(req: Request) {
       console.warn("[DELETE_ADMIN_SERVICES] DB offline, deleting local:", dbErr);
     }
 
-    const localDeleted = deleteLocalService(parsed.data.id);
-    if (localDeleted) deleted = true;
-
     if (!deleted) {
-      return NextResponse.json({ error: "Service not found" }, { status: 404 });
+      const localDeleted = deleteLocalService(parsed.data.id);
+      if (localDeleted) deleted = true;
     }
 
-    return NextResponse.json({ success: true });
+    if (!deleted) {
+      return NextResponse.json({ success: false, error: "Service not found" }, { status: 404 });
+    }
+
+    revalidatePath("/services");
+    revalidatePath("/bridal-packages");
+    revalidatePath("/booking");
+    revalidatePath("/");
+
+    return NextResponse.json({ success: true, data: { id: parsed.data.id } });
   } catch (err) {
     return handleApiError(err, "Failed to delete service.");
   }

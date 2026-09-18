@@ -1,27 +1,17 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import Testimonial from "@/models/Testimonial";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
+import { testimonialSchema, updateTestimonialSchema } from "@/lib/validations/testimonial";
+import {
+  getLocalTestimonials,
+  saveLocalTestimonial,
+  updateLocalTestimonial,
+  deleteLocalTestimonial,
+} from "@/lib/local-store";
 import { z } from "zod";
-
-const createTestimonialSchema = z.object({
-  name: z.string().trim().min(2).max(100),
-  role: z.string().trim().optional(),
-  content: z.string().trim().min(5).max(1000),
-  rating: z.number().min(1).max(5).default(5),
-  imageUrl: z.string().url().optional().or(z.literal("")),
-  isFeatured: z.boolean().optional(),
-});
-
-const updateTestimonialSchema = z.object({
-  id: z.string().refine(isValidObjectId, { message: "Invalid testimonial ID format" }),
-  name: z.string().trim().min(2).max(100).optional(),
-  role: z.string().trim().optional(),
-  content: z.string().trim().min(5).max(1000).optional(),
-  rating: z.number().min(1).max(5).optional(),
-  isFeatured: z.boolean().optional(),
-});
 
 const deleteTestimonialSchema = z.object({
   id: z.string().refine(isValidObjectId, { message: "Invalid testimonial ID format" }),
@@ -35,11 +25,19 @@ export async function GET() {
     try {
       await connectToDatabase();
       const testimonials = await Testimonial.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
-      return NextResponse.json({ success: true, data: testimonials }, { headers: { "Cache-Control": "no-store, max-age=0" } });
+      return NextResponse.json(
+        { success: true, data: testimonials },
+        { headers: { "Cache-Control": "no-store, max-age=0" } }
+      );
     } catch (dbErr) {
-      console.warn("[GET_ADMIN_TESTIMONIALS] DB offline:", dbErr);
+      console.warn("[GET_ADMIN_TESTIMONIALS] DB offline, loading local store:", dbErr);
     }
-    return NextResponse.json({ success: true, data: [] }, { headers: { "Cache-Control": "no-store, max-age=0" } });
+
+    const localTestimonials = getLocalTestimonials(false);
+    return NextResponse.json(
+      { success: true, data: localTestimonials },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (err) {
     return handleApiError(err, "Failed to fetch testimonials.");
   }
@@ -48,20 +46,37 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const parsed = createTestimonialSchema.safeParse(body);
+    const parsed = testimonialSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
-    await connectToDatabase();
-    const testimonial = await Testimonial.create(parsed.data);
-    return NextResponse.json(testimonial, { status: 201 });
+    let testimonial = null;
+    try {
+      await connectToDatabase();
+      testimonial = await Testimonial.create(parsed.data);
+    } catch (dbErr) {
+      console.warn("[POST_ADMIN_TESTIMONIAL] DB offline, saving local:", dbErr);
+    }
+
+    let localTestimonial = null;
+    if (!testimonial) {
+      localTestimonial = saveLocalTestimonial(parsed.data);
+    }
+
+    revalidatePath("/testimonials");
+    revalidatePath("/");
+
+    return NextResponse.json(
+      { success: true, data: testimonial || localTestimonial },
+      { status: 201 }
+    );
   } catch (err) {
     return handleApiError(err, "Failed to create testimonial.");
   }
@@ -70,25 +85,41 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const parsed = updateTestimonialSchema.safeParse(body);
+    const parsed = updateTestimonialSchema.extend({
+      id: z.string().refine(isValidObjectId, { message: "Invalid testimonial ID format" }),
+    }).safeParse(body);
+
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
     const { id, ...updateData } = parsed.data;
-    await connectToDatabase();
-    const testimonial = await Testimonial.findByIdAndUpdate(id, updateData, { new: true });
-    if (!testimonial) {
-      return NextResponse.json({ error: "Testimonial not found" }, { status: 404 });
+    let testimonial = null;
+    try {
+      await connectToDatabase();
+      testimonial = await Testimonial.findByIdAndUpdate(id, updateData, { new: true });
+    } catch (dbErr) {
+      console.warn("[PATCH_ADMIN_TESTIMONIAL] DB offline, saving local:", dbErr);
     }
 
-    return NextResponse.json(testimonial);
+    let localTestimonial = null;
+    if (!testimonial) {
+      localTestimonial = updateLocalTestimonial(id, updateData);
+    }
+    if (!testimonial && !localTestimonial) {
+      return NextResponse.json({ success: false, error: "Testimonial not found" }, { status: 404 });
+    }
+
+    revalidatePath("/testimonials");
+    revalidatePath("/");
+
+    return NextResponse.json({ success: true, data: testimonial || localTestimonial });
   } catch (err) {
     return handleApiError(err, "Failed to update testimonial.");
   }
@@ -97,24 +128,39 @@ export async function PATCH(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const parsed = deleteTestimonialSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
-    await connectToDatabase();
-    const testimonial = await Testimonial.findByIdAndUpdate(parsed.data.id, { isDeleted: true }, { new: true });
-    if (!testimonial) {
-      return NextResponse.json({ error: "Testimonial not found" }, { status: 404 });
+    let deleted = false;
+    try {
+      await connectToDatabase();
+      const testimonial = await Testimonial.findByIdAndUpdate(parsed.data.id, { isDeleted: true }, { new: true });
+      if (testimonial) deleted = true;
+    } catch (dbErr) {
+      console.warn("[DELETE_ADMIN_TESTIMONIAL] DB offline, deleting local:", dbErr);
     }
 
-    return NextResponse.json({ success: true });
+    if (!deleted) {
+      const localDeleted = deleteLocalTestimonial(parsed.data.id);
+      if (localDeleted) deleted = true;
+    }
+
+    if (!deleted) {
+      return NextResponse.json({ success: false, error: "Testimonial not found" }, { status: 404 });
+    }
+
+    revalidatePath("/testimonials");
+    revalidatePath("/");
+
+    return NextResponse.json({ success: true, data: { id: parsed.data.id } });
   } catch (err) {
     return handleApiError(err, "Failed to delete testimonial.");
   }

@@ -22,23 +22,12 @@ export async function GET(req: Request) {
     try {
       await connectToDatabase();
 
-      // Auto-seed initial services if collection is empty
-      const count = await Service.countDocuments({ isDeleted: false });
-      if (count === 0) {
-        console.log("[GET_SERVICES] Seeding MongoDB with initial services...");
-        const localForSeed = getLocalServices(category || undefined);
-        const seedPayload = localForSeed.map(({ _id, ...item }) => item);
-        await Service.insertMany(seedPayload);
-      }
-
       const filter: Record<string, unknown> = { isDeleted: false };
       if (category && category !== "all") {
         filter.category = category;
       }
 
-      // BUG FIX: DB is the single source of truth when reachable.
-      // Admin price edits go to MongoDB. This ensures those edits are reflected
-      // everywhere (production and local) without stale local JSON shadowing them.
+      // DB is the single source of truth when reachable.
       const dbServices = await Service.find(filter).sort({ createdAt: -1 }).lean();
       return NextResponse.json(
         { success: true, data: dbServices },
@@ -92,9 +81,8 @@ export async function POST(req: Request) {
       console.warn("[POST_SERVICE] MongoDB unavailable, saving to local store:", dbErr);
     }
 
-    const localCreated = saveLocalService(parsed.data as any);
     if (!createdService) {
-      createdService = localCreated;
+      createdService = saveLocalService(parsed.data as any);
     }
 
     // Instant cache revalidation on website

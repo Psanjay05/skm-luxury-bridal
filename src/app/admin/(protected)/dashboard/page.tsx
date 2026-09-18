@@ -32,6 +32,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface ActivityItem {
   id: string;
   type: "booking" | "message";
@@ -102,14 +105,14 @@ async function getDashboardData() {
 
     return {
       stats: {
-        totalBookings: Math.max(totalBookings, localBookings.length),
-        pendingBookings: Math.max(pendingBookings, localBookings.filter((b) => b.status === "pending").length),
-        unreadMessages: Math.max(unreadMessages, localMessages.filter((m) => m.status === "unread").length),
-        totalMessages: Math.max(totalMessages, localMessages.length),
-        galleryImages: Math.max(galleryImages, localGallery.length),
-        totalServices: Math.max(totalServices, localServices.length),
-        totalTestimonials: Math.max(totalTestimonials, localTestimonials.length),
-        totalFaqs: Math.max(totalFaqs, localFaqs.length),
+        totalBookings,
+        pendingBookings,
+        unreadMessages,
+        totalMessages,
+        galleryImages,
+        totalServices,
+        totalTestimonials,
+        totalFaqs,
       },
       recentActivity,
     };
