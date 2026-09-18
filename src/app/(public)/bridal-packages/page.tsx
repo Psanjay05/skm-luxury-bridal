@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { trackEvent } from "@/lib/gtag";
 import { PrintQuotationModal } from "@/components/bridal-calculator/PrintQuotationModal";
+import { sanitizePriceInput } from "@/lib/currency";
 
 interface PackageTier {
   name: string;
@@ -97,7 +98,7 @@ export default function BridalPackagesPage() {
           if (bridalPackageServices.length > 0) {
             const mappedPackages: PackageTier[] = bridalPackageServices.map((s, idx) => ({
               name: s.title,
-              price: s.price,
+              price: sanitizePriceInput(s.price),
               tagline: s.tagline || s.description || "Premium Bridal Package",
               featured: idx === 1 || s.title.toLowerCase().includes("royal") || s.title.toLowerCase().includes("hd"),
               features: s.features && s.features.length > 0 ? s.features : (
@@ -117,7 +118,7 @@ export default function BridalPackagesPage() {
                 const match = dbServices.find(
                   (s) => s.title.toLowerCase().trim() === pkg.name.toLowerCase().trim()
                 );
-                return match ? { ...pkg, price: match.price, tagline: match.tagline || pkg.tagline } : pkg;
+                return match ? { ...pkg, price: sanitizePriceInput(match.price), tagline: match.tagline || pkg.tagline } : pkg;
               })
             );
           }

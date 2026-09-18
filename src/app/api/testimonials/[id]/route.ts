@@ -86,10 +86,9 @@ export async function DELETE(
       console.warn("[DELETE_TESTIMONIAL] DB offline, deleting local:", dbErr);
     }
 
-    if (!deleted) {
-      const localDeleted = deleteLocalTestimonial(id);
-      if (localDeleted) deleted = true;
-    }
+    // Always delete from local store as well so offline fallbacks never resurrect the review
+    const localDeleted = deleteLocalTestimonial(id);
+    if (localDeleted) deleted = true;
 
     if (!deleted) {
       return NextResponse.json({ success: false, error: "Testimonial not found" }, { status: 404 });
@@ -98,7 +97,7 @@ export async function DELETE(
     revalidatePath("/testimonials");
     revalidatePath("/");
 
-    return NextResponse.json({ success: true, data: { id } });
+    return NextResponse.json({ success: true, data: { id } }, { status: 200 });
   } catch (err) {
     return handleApiError(err, "Failed to delete testimonial.");
   }

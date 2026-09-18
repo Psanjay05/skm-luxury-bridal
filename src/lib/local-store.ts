@@ -231,6 +231,12 @@ export function deleteLocalTestimonial(id: string): boolean {
     writeJsonFile("testimonials.json", all);
     return true;
   }
+  const initial = INITIAL_TESTIMONIALS.find((t) => t._id === id);
+  if (initial) {
+    all.push({ ...initial, isDeleted: true, updatedAt: new Date().toISOString() });
+    writeJsonFile("testimonials.json", all);
+    return true;
+  }
   return false;
 }
 
@@ -421,7 +427,35 @@ export function updateLocalBooking(id: string, data: Partial<BookingRecord>): Bo
     writeJsonFile("bookings.json", all);
     return all[index];
   }
+
+  const initial = (INITIAL_BOOKINGS as BookingRecord[]).find((b) => b._id === id || b.bookingReference === id);
+  if (initial) {
+    const updated: BookingRecord = { ...initial, ...data, updatedAt: now };
+    all.unshift(updated);
+    writeJsonFile("bookings.json", all);
+    return updated;
+  }
+
   return null;
+}
+
+export function deleteLocalBooking(id: string): boolean {
+  const all = readJsonFile<BookingRecord[]>("bookings.json", INITIAL_BOOKINGS as BookingRecord[]);
+  const index = all.findIndex((b) => b._id === id || b.bookingReference === id);
+  const now = new Date().toISOString();
+  if (index !== -1) {
+    all[index].isDeleted = true;
+    all[index].updatedAt = now;
+    writeJsonFile("bookings.json", all);
+    return true;
+  }
+  const initial = (INITIAL_BOOKINGS as BookingRecord[]).find((b) => b._id === id || b.bookingReference === id);
+  if (initial) {
+    all.push({ ...initial, isDeleted: true, updatedAt: now });
+    writeJsonFile("bookings.json", all);
+    return true;
+  }
+  return false;
 }
 
 // ---------------- CONTACT MESSAGES ----------------

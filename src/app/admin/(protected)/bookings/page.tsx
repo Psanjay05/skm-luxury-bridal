@@ -46,6 +46,7 @@ export default function BookingsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   const fetchBookings = useCallback(async () => {
     setLoading(true);
@@ -91,16 +92,24 @@ export default function BookingsPage() {
   const updateStatus = async (id: string, status: string) => {
     try {
       setActionError(null);
+      setActionSuccess(null);
       const res = await fetch(`/api/admin/bookings/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error("Failed to update status");
-      fetchBookings();
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to update booking status");
+      }
+      setBookings((prev) =>
+        prev.map((b) => (b._id === id ? { ...b, status: status as Booking["status"] } : b))
+      );
+      setActionSuccess(`Booking status updated to "${status}".`);
     } catch (err) {
       console.error("[UPDATE_BOOKING_STATUS_ERROR]", err);
-      setActionError("Failed to update booking status.");
+      const msg = err instanceof Error ? err.message : "Failed to update booking status.";
+      setActionError(msg);
     }
   };
 
@@ -108,14 +117,21 @@ export default function BookingsPage() {
     if (!confirm("Are you sure you want to delete this booking record?")) return;
     try {
       setActionError(null);
+      setActionSuccess(null);
       const res = await fetch(`/api/admin/bookings/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete booking");
-      fetchBookings();
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to delete booking");
+      }
+      // Optimistically remove record from UI state immediately
+      setBookings((prev) => prev.filter((b) => b._id !== id));
+      setActionSuccess("Booking record deleted successfully.");
     } catch (err) {
       console.error("[DELETE_BOOKING_ERROR]", err);
-      setActionError("Failed to delete booking.");
+      const msg = err instanceof Error ? err.message : "Failed to delete booking.";
+      setActionError(msg);
     }
   };
 
@@ -196,9 +212,21 @@ Looking forward to your stunning bridal makeover! ❤️`;
         </div>
       </div>
 
+      {actionSuccess && (
+        <div className="p-3 text-sm rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-between font-medium">
+          <span>{actionSuccess}</span>
+          <button onClick={() => setActionSuccess(null)} className="text-xs hover:underline opacity-80">
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {actionError && (
-        <div className="p-3 text-sm rounded-md bg-destructive/10 text-destructive font-medium">
-          {actionError}
+        <div className="p-3 text-sm rounded-md bg-destructive/10 text-destructive font-medium flex items-center justify-between">
+          <span>{actionError}</span>
+          <button onClick={() => setActionError(null)} className="text-xs hover:underline opacity-80">
+            Dismiss
+          </button>
         </div>
       )}
 

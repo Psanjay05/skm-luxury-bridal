@@ -60,20 +60,34 @@ export default function GalleryAdminPage() {
     setActionError(null);
     try {
       const url = filter === "All" ? "/api/gallery" : `/api/gallery?category=${encodeURIComponent(filter)}`;
-      const res = await fetch(url);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const res = await fetch(url, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache, no-store" },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
       const json = await res.json();
       if (res.ok && json.success) {
-        setImages(json.data ?? []);
+        setImages(Array.isArray(json.data) ? json.data : []);
       } else {
         const errorMsg = json.details
           ? `${json.error || "Failed to fetch gallery images"} — ${json.details}`
           : (json.error || `Failed to fetch gallery images (HTTP ${res.status}).`);
         setActionError(errorMsg);
+        setImages([]);
       }
     } catch (err: unknown) {
       console.error("[FETCH_GALLERY_ERROR]", err);
-      const msg = err instanceof Error ? err.message : "Unable to reach server.";
-      setActionError(`Unable to fetch gallery: ${msg}. Please refresh or try again.`);
+      const isAbort = err instanceof Error && err.name === "AbortError";
+      const msg = isAbort
+        ? "Request timed out while loading gallery images. Click 'Try Again'."
+        : err instanceof Error ? err.message : "Unable to reach server.";
+      setActionError(`Unable to fetch gallery: ${msg}`);
+      setImages((prev) => (prev.length > 0 ? prev : []));
     } finally {
       setLoading(false);
     }
@@ -330,9 +344,24 @@ export default function GalleryAdminPage() {
           <Loader2 size={18} className="animate-spin text-primary" /> Loading portfolio images...
         </div>
       ) : images.length === 0 ? (
-        <div className="text-center py-16 bg-card border border-border rounded-xl">
-          <ImageIcon className="mx-auto mb-4 text-muted-foreground" size={40} />
-          <p className="text-muted-foreground">No images in this category. Click &quot;Add Portfolio Picture&quot; above.</p>
+        <div className="text-center py-16 px-4 bg-card border border-border rounded-xl flex flex-col items-center justify-center space-y-3">
+          <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-1">
+            <ImageIcon size={30} />
+          </div>
+          <h3 className="font-heading text-lg font-bold text-foreground">No portfolio images uploaded yet</h3>
+          <p className="text-muted-foreground text-xs sm:text-sm max-w-md">
+            {filter === "All"
+              ? "Start building the studio portfolio showcase by clicking 'Add Portfolio Picture' above."
+              : `No portfolio images found in the "${filter}" category. Select another category or upload a new photo.`}
+          </p>
+          <Button
+            onClick={() => { setOpen(true); setActionError(null); setActionSuccess(null); }}
+            variant="outline"
+            size="sm"
+            className="mt-2 text-xs font-semibold gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+          >
+            <Plus size={14} /> Add Portfolio Picture
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">

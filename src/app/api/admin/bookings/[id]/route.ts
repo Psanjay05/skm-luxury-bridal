@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import Booking from "@/models/Booking";
 import { handleApiError, isValidObjectId } from "@/lib/errors";
-import { updateLocalBooking } from "@/lib/local-store";
+import { updateLocalBooking, deleteLocalBooking } from "@/lib/local-store";
 import { updateBookingStatusSchema } from "@/lib/validations/booking";
 
 // PATCH /api/admin/bookings/[id] — update booking status (Admin only)
@@ -83,14 +83,15 @@ export async function DELETE(
       console.warn("[DELETE_ADMIN_BOOKING] DB offline, deleting local:", dbErr);
     }
 
-    const localDeleted = updateLocalBooking(id, { isDeleted: true });
+    // Always delete from local store as well to guarantee cross-store sync
+    const localDeleted = deleteLocalBooking(id);
     if (localDeleted) deleted = true;
 
     if (!deleted) {
       return NextResponse.json({ success: false, error: "Booking not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: { id } });
+    return NextResponse.json({ success: true, data: { id } }, { status: 200 });
   } catch (err) {
     return handleApiError(err, "Failed to delete booking.");
   }

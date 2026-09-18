@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, Clock, AlertCircle, Sparkles, Tag, Check } from "lucide-react";
+import { sanitizePriceInput } from "@/lib/currency";
 
 type Service = {
   _id?: string;
@@ -85,9 +86,9 @@ export default function ServicesAdminPage() {
   }, []);
 
   const handleSave = async () => {
-    // Trim price but preserve exact characters — "just ₹20" must stay "just ₹20"
-    const trimmedPrice = form.price.trim();
-    if (!form.title.trim() || !trimmedPrice || !form.description.trim()) {
+    // Sanitize price input — formats directly in INR without accidental subunit division
+    const sanitizedPrice = sanitizePriceInput(form.price);
+    if (!form.title.trim() || !sanitizedPrice || !form.description.trim()) {
       setActionError("Please provide title, price, and description.");
       return;
     }
@@ -100,12 +101,9 @@ export default function ServicesAdminPage() {
       const url = editingId ? `/api/admin/services/${editingId}` : "/api/admin/services";
       const method = editingId ? "PATCH" : "POST";
 
-      // BUG 2 FIX: Explicitly cast price to String before sending to API.
-      // This prevents any accidental numeric coercion if the browser serialises
-      // a value like "20" (digits-only) as a JSON number rather than a string.
       const payload = {
         ...form,
-        price: String(trimmedPrice),
+        price: sanitizedPrice,
       };
 
       const res = await fetch(url, {
@@ -114,21 +112,20 @@ export default function ServicesAdminPage() {
         body: JSON.stringify(payload),
       });
 
-
       const json = await res.json();
 
       if (res.ok && json.success) {
-        // Optimistic instant UI update
+        // Optimistic instant UI update with sanitized price
         if (editingId) {
           setServices((prev) =>
-            prev.map((item) => (item._id === editingId ? { ...item, ...form } : item))
+            prev.map((item) => (item._id === editingId ? { ...item, ...form, price: sanitizedPrice } : item))
           );
-          setActionSuccess(`Updated "${form.title}" price to ${form.price}. Live on website!`);
+          setActionSuccess(`Updated "${form.title}" price to ${sanitizedPrice}. Live on website!`);
         } else {
           if (json.data) {
             setServices((prev) => [json.data, ...prev]);
           }
-          setActionSuccess(`Added "${form.title}" with price ${form.price}. Live on website!`);
+          setActionSuccess(`Added "${form.title}" with price ${sanitizedPrice}. Live on website!`);
         }
 
         setOpen(false);

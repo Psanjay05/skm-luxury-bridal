@@ -26,13 +26,17 @@ export default function TestimonialsAdminPage() {
   const [form, setForm] = useState<Testimonial>(EMPTY);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const fetchTestimonials = async () => {
     setLoading(true);
     setActionError(null);
     try {
-      const res = await fetch("/api/testimonials");
+      const res = await fetch("/api/testimonials", {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache, no-store" },
+      });
       const json = await res.json();
       if (res.ok && json.success) {
         setItems(json.data ?? []);
@@ -54,6 +58,7 @@ export default function TestimonialsAdminPage() {
   const handleSave = async () => {
     setSaving(true);
     setActionError(null);
+    setActionSuccess(null);
 
     try {
       const url = editingId ? `/api/testimonials/${editingId}` : "/api/testimonials";
@@ -68,6 +73,13 @@ export default function TestimonialsAdminPage() {
       const json = await res.json();
 
       if (res.ok && json.success) {
+        if (editingId) {
+          setItems((prev) => prev.map((t) => (t._id === editingId ? { ...t, ...form } : t)));
+          setActionSuccess(`Updated testimonial for "${form.customerName}".`);
+        } else if (json.data) {
+          setItems((prev) => [json.data, ...prev]);
+          setActionSuccess(`Added testimonial for "${form.customerName}".`);
+        }
         setOpen(false);
         setForm(EMPTY);
         setEditingId(null);
@@ -86,6 +98,7 @@ export default function TestimonialsAdminPage() {
   const handleToggleFeatured = async (id: string, currentStatus: boolean) => {
     try {
       setActionError(null);
+      setActionSuccess(null);
       const res = await fetch(`/api/testimonials/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -93,7 +106,10 @@ export default function TestimonialsAdminPage() {
       });
       const json = await res.json();
       if (res.ok && json.success) {
-        fetchTestimonials();
+        setItems((prev) =>
+          prev.map((t) => (t._id === id ? { ...t, isFeatured: !currentStatus } : t))
+        );
+        setActionSuccess(`Updated featured status.`);
       } else {
         setActionError(json.error || "Failed to update status.");
       }
@@ -106,6 +122,8 @@ export default function TestimonialsAdminPage() {
   const handleEdit = (t: Testimonial) => {
     setForm(t);
     setEditingId(t._id ?? null);
+    setActionError(null);
+    setActionSuccess(null);
     setOpen(true);
   };
 
@@ -113,18 +131,22 @@ export default function TestimonialsAdminPage() {
     if (!confirm("Delete this testimonial review?")) return;
     try {
       setActionError(null);
+      setActionSuccess(null);
       const res = await fetch(`/api/testimonials/${id}`, {
         method: "DELETE",
       });
       const json = await res.json();
       if (res.ok && json.success) {
-        fetchTestimonials();
+        // Optimistically remove from state immediately
+        setItems((prev) => prev.filter((t) => t._id !== id));
+        setActionSuccess("Testimonial review deleted successfully.");
       } else {
         setActionError(json.error || "Failed to delete testimonial.");
       }
     } catch (err) {
       console.error("[DELETE_TESTIMONIAL_ERROR]", err);
-      setActionError("Failed to delete testimonial.");
+      const msg = err instanceof Error ? err.message : "Failed to delete testimonial.";
+      setActionError(msg);
     }
   };
 
@@ -135,15 +157,29 @@ export default function TestimonialsAdminPage() {
           <h1 className="font-heading text-3xl font-bold text-foreground">Bride Testimonials</h1>
           <p className="text-muted-foreground text-sm mt-1">Approve, feature, and manage bride reviews</p>
         </div>
-        <Button onClick={() => { setForm(EMPTY); setEditingId(null); setOpen(true); }} className="bg-primary text-primary-foreground gap-2 font-semibold">
+        <Button onClick={() => { setForm(EMPTY); setEditingId(null); setOpen(true); setActionError(null); setActionSuccess(null); }} className="bg-primary text-primary-foreground gap-2 font-semibold">
           <Plus size={16} /> Add Testimonial
         </Button>
       </div>
 
+      {actionSuccess && (
+        <div className="p-3.5 text-sm rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-between font-medium">
+          <span>{actionSuccess}</span>
+          <button onClick={() => setActionSuccess(null)} className="text-xs hover:underline opacity-80">
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {actionError && (
-        <div className="p-3.5 text-sm rounded-md bg-destructive/10 text-destructive flex items-center gap-2 font-medium">
-          <AlertCircle size={16} />
-          <span>{actionError}</span>
+        <div className="p-3.5 text-sm rounded-md bg-destructive/10 text-destructive flex items-center justify-between font-medium">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{actionError}</span>
+          </div>
+          <button onClick={() => setActionError(null)} className="text-xs hover:underline opacity-80">
+            Dismiss
+          </button>
         </div>
       )}
 

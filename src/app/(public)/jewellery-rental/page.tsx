@@ -113,6 +113,39 @@ const JEWELLERY_CATALOG: JewelleryItem[] = [
 
 const CATEGORIES = ["All", "Temple Gold", "Antique Choker", "Ottiyanam", "Hair & Maang Tikka", "Zircon & Bridal Sets"];
 
+function JewelleryImageWithFallback({
+  src,
+  alt,
+  fallbackSrc = "/images/jewellery/antique-bridal-complete-set.jpg",
+  className = "",
+  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
+}: {
+  src: string;
+  alt: string;
+  fallbackSrc?: string;
+  className?: string;
+  sizes?: string;
+}) {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <Image
+      src={hasError ? fallbackSrc : imgSrc}
+      alt={alt}
+      fill
+      sizes={sizes}
+      className={className}
+      onError={() => {
+        if (!hasError) {
+          setHasError(true);
+          setImgSrc(fallbackSrc);
+        }
+      }}
+    />
+  );
+}
+
 export default function JewelleryRentalPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedSet, setSelectedSet] = useState<JewelleryItem | null>(null);
@@ -176,13 +209,14 @@ export default function JewelleryRentalPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
+                className="h-full flex flex-col min-w-0"
               >
-                <Card className="h-full border-border/80 shadow-md hover:shadow-xl transition-all bg-card overflow-hidden flex flex-col justify-between group">
-                  <div className="relative aspect-[4/3] overflow-hidden bg-primary/5">
-                    <Image
+                <Card className="h-full border-border/80 shadow-md hover:shadow-xl transition-all bg-card overflow-hidden flex flex-col justify-between group min-w-0 w-full">
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-primary/5">
+                    <JewelleryImageWithFallback
                       src={item.image}
                       alt={item.name}
-                      fill
+                      fallbackSrc="/images/jewellery/antique-bridal-complete-set.jpg"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
                     />
@@ -191,20 +225,23 @@ export default function JewelleryRentalPage() {
                     </div>
                   </div>
 
-                  <CardContent className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-heading text-xl font-bold text-foreground leading-snug">{item.name}</h3>
+                  <CardContent className="p-6 space-y-4 flex-1 flex flex-col justify-between overflow-hidden min-w-0">
+                    <div className="space-y-2 min-w-0">
+                      <div className="flex justify-between items-start min-w-0">
+                        <h3 className="font-heading text-xl font-bold text-foreground leading-snug truncate">{item.name}</h3>
                       </div>
                       <p className="text-xs text-primary font-bold">{item.priceTag}</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{item.description}</p>
 
-                      <div className="pt-3 border-t border-border/60">
+                      <div className="pt-3 border-t border-border/60 overflow-hidden w-full">
                         <span className="text-[11px] font-semibold text-foreground uppercase tracking-wider block mb-2">Set Includes:</span>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div
+                          className="flex flex-wrap gap-2 w-full overflow-hidden"
+                          style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}
+                        >
                           {item.includes.map((inc, i) => (
-                            <span key={i} className="text-[10px] bg-muted px-2 py-0.5 rounded text-muted-foreground flex items-center gap-1">
-                              <Check size={10} className="text-emerald-600" /> {inc}
+                            <span key={i} className="text-[10px] bg-muted px-2 py-0.5 rounded text-muted-foreground inline-flex items-center gap-1 shrink-0">
+                              <Check size={10} className="text-emerald-600 shrink-0" /> {inc}
                             </span>
                           ))}
                         </div>
@@ -260,10 +297,10 @@ export default function JewelleryRentalPage() {
                 <p className="text-sm font-semibold text-primary">{selectedSet.priceTag}</p>
 
                 <div className="aspect-video relative rounded-lg overflow-hidden border border-border">
-                  <Image 
+                  <JewelleryImageWithFallback 
                     src={selectedSet.image} 
                     alt={selectedSet.name} 
-                    fill 
+                    fallbackSrc="/images/jewellery/antique-bridal-complete-set.jpg"
                     sizes="(max-width: 768px) 100vw, 600px"
                     className="object-cover object-top" 
                   />
